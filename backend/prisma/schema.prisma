@@ -129,6 +129,7 @@ model Event {
   rewardItem         ItemMaster?   @relation("RewardItem", fields: [rewardItemId], references: [id], onDelete: SetNull)
   options            EventOption[]
   votes              Vote[]
+  relatedTransactions PointTransaction[] @relation("RelatedEvent")
   result             EventResult?
 
   @@index([eventType, status])
@@ -142,8 +143,9 @@ model EventOption {
   eventId   String
   label     String
   sortOrder Int
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  votes     Vote[]
+  event               Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  votes               Vote[]
+  wonInEventResults   EventResult[]  @relation("WinningOption")
 
   @@unique([eventId, label])
   @@unique([eventId, id])
@@ -177,7 +179,7 @@ model EventResult {
   winningOptionId  String
   settledAt        DateTime
   event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  winningOption    EventOption @relation(fields: [winningOptionId], references: [id], onDelete: Restrict)
+  winningOption    EventOption @relation("WinningOption", fields: [winningOptionId], references: [id], onDelete: Restrict)
 }
 
 model PointTransaction {
@@ -190,7 +192,7 @@ model PointTransaction {
   relatedVoteId    String?
   createdAt        DateTime             @default(now())
   user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  relatedEvent     Event?               @relation(fields: [relatedEventId], references: [id], onDelete: SetNull)
+  relatedEvent     Event?               @relation("RelatedEvent", fields: [relatedEventId], references: [id], onDelete: SetNull)
   relatedVote      Vote?                @relation(fields: [relatedVoteId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
