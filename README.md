@@ -15,6 +15,12 @@ MVP構成:
   - `GET /health` : ヘルスチェック
   - `GET /api` : ルート一覧サマリー
 
+
+## Mobile API connection status
+- `mobile/` は UI雛形のみではなく、MVPの主要APIに接続済みです。
+- 実装済み: onboarding, home, events, vote作成, vote history, results, avatar取得/level-up, my page。
+- APIベースURLは `mobile/src/lib/api.ts` の `API_BASE_URL` を利用します（必要に応じて環境に合わせて変更）。
+
 ## Local development setup
 
 ### 1) PostgreSQL を起動
