@@ -19,7 +19,10 @@ MVP構成:
 ## Mobile API connection status
 - `mobile/` は UI雛形のみではなく、MVPの主要APIに接続済みです。
 - 実装済み: onboarding, home, events, vote作成, vote history, results, avatar取得/level-up, my page。
-- APIベースURLは `mobile/src/lib/api.ts` の `API_BASE_URL` を利用します（必要に応じて環境に合わせて変更）。
+- APIベースURLは `mobile/src/lib/api.ts` の `API_BASE_URL` を利用します。
+  - Web開発の既定値: `http://localhost:3000`
+  - 実機/別端末テスト: `EXPO_PUBLIC_API_BASE_URL` を `http://<PCのLAN-IP>:3000` に設定
+  - 例: `EXPO_PUBLIC_API_BASE_URL=http://192.168.1.10:3000 npm run start`
 
 ## Local development setup
 
@@ -52,7 +55,7 @@ npm run dev
 
 ### 1) Onboarding (public)
 ```bash
-curl -X POST http://localhost:4000/api/users/onboarding \
+curl -X POST http://localhost:3000/api/users/onboarding \
   -H "Content-Type: application/json" \
   -d '{
     "nickname": "Tetsu",
@@ -63,13 +66,13 @@ curl -X POST http://localhost:4000/api/users/onboarding \
 
 ### 2) Events list (protected)
 ```bash
-curl "http://localhost:4000/api/events?status=open" \
+curl "http://localhost:3000/api/events?status=open" \
   -H "x-user-id: usr_demo_1"
 ```
 
 ### 3) Create vote (protected)
 ```bash
-curl -X POST http://localhost:4000/api/votes \
+curl -X POST http://localhost:3000/api/votes \
   -H "Content-Type: application/json" \
   -H "x-user-id: usr_demo_1" \
   -d '{
@@ -81,13 +84,13 @@ curl -X POST http://localhost:4000/api/votes \
 
 ### 4) Vote history (protected)
 ```bash
-curl http://localhost:4000/api/votes/history \
+curl http://localhost:3000/api/votes/history \
   -H "x-user-id: usr_demo_1"
 ```
 
 ### 5) Settle result (protected/admin endpoint in MVP)
 ```bash
-curl -X POST http://localhost:4000/api/admin/events/settle \
+curl -X POST http://localhost:3000/api/admin/events/settle \
   -H "Content-Type: application/json" \
   -H "x-user-id: usr_demo_1" \
   -d '{
@@ -98,16 +101,16 @@ curl -X POST http://localhost:4000/api/admin/events/settle \
 
 ### 6) Results list (protected)
 ```bash
-curl http://localhost:4000/api/results \
+curl http://localhost:3000/api/results \
   -H "x-user-id: usr_demo_1"
 ```
 
 ### 7) Avatar info / level up (protected)
 ```bash
-curl http://localhost:4000/api/avatar \
+curl http://localhost:3000/api/avatar \
   -H "x-user-id: usr_demo_1"
 
-curl -X POST http://localhost:4000/api/avatar/level-up \
+curl -X POST http://localhost:3000/api/avatar/level-up \
   -H "Content-Type: application/json" \
   -H "x-user-id: usr_demo_1" \
   -d '{"itemId":"itm_exp_small","quantity":1}'
@@ -117,26 +120,26 @@ curl -X POST http://localhost:4000/api/avatar/level-up \
 
 ```powershell
 # Onboarding
-Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/users/onboarding" `
+Invoke-RestMethod -Method Post -Uri "http://localhost:3000/api/users/onboarding" `
   -ContentType "application/json" `
   -Body '{"nickname":"Tetsu","regionCode":"kanagawa","avatarType":"cat"}'
 
 # Protected route example: events list
-Invoke-RestMethod -Method Get -Uri "http://localhost:4000/api/events?status=open" `
+Invoke-RestMethod -Method Get -Uri "http://localhost:3000/api/events?status=open" `
   -Headers @{ "x-user-id" = "usr_demo_1" }
 
 # Vote create
-Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/votes" `
+Invoke-RestMethod -Method Post -Uri "http://localhost:3000/api/votes" `
   -ContentType "application/json" `
   -Headers @{ "x-user-id" = "usr_demo_1" } `
   -Body '{"eventId":"evt_global_1","optionId":"opt_global_1","betPoints":100}'
 
 # Results
-Invoke-RestMethod -Method Get -Uri "http://localhost:4000/api/results" `
+Invoke-RestMethod -Method Get -Uri "http://localhost:3000/api/results" `
   -Headers @{ "x-user-id" = "usr_demo_1" }
 
 # Avatar
-Invoke-RestMethod -Method Get -Uri "http://localhost:4000/api/avatar" `
+Invoke-RestMethod -Method Get -Uri "http://localhost:3000/api/avatar" `
   -Headers @{ "x-user-id" = "usr_demo_1" }
 ```
 

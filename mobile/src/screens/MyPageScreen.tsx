@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { Text } from "react-native";
+import { ScreenTemplate } from "../components/ScreenTemplate";
 import { apiRequest } from "../lib/api";
 
 export function MyPageScreen({ userId }: { userId?: string }) {
