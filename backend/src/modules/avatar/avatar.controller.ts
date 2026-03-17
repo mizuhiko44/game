@@ -16,10 +16,15 @@ const levelUpSchema = z.object({ itemId: z.string(), quantity: z.number().int().
 export async function levelUpAvatar(req: AuthedRequest, res: Response) {
   const parsed = levelUpSchema.parse(req.body);
 
-  const payload = await prisma.$transaction(async (tx) => {
-    const userItem = await tx.userItem.findUnique({ where: { userId_itemId: { userId: req.userId, itemId: parsed.itemId } }, include: { item: true } });
-    if (!userItem || userItem.quantity < parsed.quantity) throw new HttpError(400, "insufficient items");
+  const userItem = await prisma.userItem.findUnique({
+    where: { userId_itemId: { userId: req.userId, itemId: parsed.itemId } },
+    include: { item: true },
+  });
+  if (!userItem || userItem.quantity < parsed.quantity) {
+    throw new HttpError(400, "insufficient items");
+  }
 
+  const payload = await prisma.$transaction(async (tx) => {
     const expGain = userItem.item.expValue * parsed.quantity;
     const avatar = await tx.avatar.findUniqueOrThrow({ where: { userId: req.userId } });
     const nextExp = avatar.exp + expGain;

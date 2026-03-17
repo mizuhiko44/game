@@ -49,6 +49,8 @@ npm run dev
 - Sample global event id: `evt_global_1`
 - Sample local event id: `evt_local_1`
 
+- Avatar育成アイテムは初期所持0です。`/api/admin/events/settle` で的中報酬として付与後に `POST /api/avatar/level-up` を実行してください。
+
 ---
 
 ## API examples (curl)

@@ -6,9 +6,13 @@ export class HttpError extends Error {
   }
 }
 
+function isHttpLikeError(err: unknown): err is { status: number; message: string } {
+  return typeof err === "object" && err !== null && "status" in err && "message" in err;
+}
+
 export function errorMiddleware(err: unknown, _req: Request, res: Response, _next: NextFunction) {
-  if (err instanceof HttpError) {
-    return res.status(err.status).json({ message: err.message });
+  if (err instanceof HttpError || isHttpLikeError(err)) {
+    return res.status((err as { status: number }).status).json({ message: (err as { message: string }).message });
   }
 
   console.error(err);
