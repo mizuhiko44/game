@@ -20,7 +20,15 @@ export async function createVote(req: AuthedRequest, res: Response) {
       tx.event.findUnique({ where: { id: parsed.eventId } }),
     ]);
 
-    if (!event || event.status !== "open" || event.voteEndAt <= new Date()) throw new HttpError(403, "event closed");
+    if (!event) throw new HttpError(403, "event closed");
+
+    const now = new Date();
+    if (event.status !== "open" || event.voteEndAt <= now || event.startAt > now) {
+      if (event.status === "open" && event.voteEndAt <= now) {
+        await tx.event.update({ where: { id: event.id }, data: { status: "closed" } });
+      }
+      throw new HttpError(403, "event closed");
+    }
 
     const exists = await tx.vote.findUnique({ where: { userId_eventId: { userId: req.userId, eventId: parsed.eventId } } });
     if (exists) throw new HttpError(409, "already voted");

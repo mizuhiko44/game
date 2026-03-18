@@ -130,7 +130,7 @@ export function AdminScreen({ userId }: { userId?: string }) {
           ))}
         </View>
         <TextInput value={title} onChangeText={setTitle} placeholder="title" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
-        <TextInput value={description} onChangeText={setDescription} placeholder="description" placeholderTextColor="#7E89AF" multiline style={INPUT_STYLE} />
+        <TextInput value={description} onChangeText={setDescription} placeholder="description (optional)" placeholderTextColor="#7E89AF" multiline style={INPUT_STYLE} />
         {eventType === "local" && <TextInput value={regionCode} onChangeText={setRegionCode} placeholder="regionCode" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />}
         <TextInput value={minBetPoints} onChangeText={setMinBetPoints} placeholder="minBetPoints" placeholderTextColor="#7E89AF" keyboardType="numeric" style={INPUT_STYLE} />
         <TextInput value={rewardItemId} onChangeText={setRewardItemId} placeholder="rewardItemId (optional)" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />

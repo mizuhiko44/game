@@ -11,7 +11,7 @@ const createEventSchema = z
     regionCode: z.string().trim().optional(),
     category: z.nativeEnum(EventCategory),
     title: z.string().trim().min(1).max(120),
-    description: z.string().trim().min(1).max(2000),
+    description: z.string().trim().max(2000).default(""),
     startAt: z.string().datetime().optional(),
     voteEndAt: z.string().datetime(),
     resultAt: z.string().datetime(),
@@ -28,11 +28,14 @@ const createEventSchema = z
 
 export async function listEvents(req: AuthedRequest, res: Response) {
   const { type, status, regionCode } = req.query;
+  const now = new Date();
+  const normalizedStatus = typeof status === "string" ? status : undefined;
   const events = await prisma.event.findMany({
     where: {
       eventType: type as EventType | undefined,
-      status: status as any,
+      status: normalizedStatus as any,
       regionCode: typeof regionCode === "string" ? regionCode : undefined,
+      ...(normalizedStatus === "open" ? { startAt: { lte: now }, voteEndAt: { gt: now } } : {}),
     },
     include: {
       options: true,
@@ -133,7 +136,7 @@ export async function createEvent(req: AuthedRequest, res: Response) {
       regionCode: parsed.eventType === EventType.local ? parsed.regionCode?.trim() : null,
       category: parsed.category,
       title: parsed.title,
-      description: parsed.description,
+      description: parsed.description ?? "",
       status,
       startAt,
       voteEndAt,
