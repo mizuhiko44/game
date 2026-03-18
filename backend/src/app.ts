@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import router from "./routes";
 import { errorMiddleware } from "./middlewares/error";
+import { logger } from "./lib/logger";
 
 export const app = express();
 
@@ -35,7 +36,7 @@ app.use((req, res, next) => {
   res.setHeader("x-request-id", requestId);
   res.on("finish", () => {
     const elapsedMs = Number(process.hrtime.bigint() - startAt) / 1_000_000;
-    console.log(`${req.method} ${req.originalUrl} -> ${res.statusCode} [${elapsedMs.toFixed(1)}ms] rid=${requestId}`);
+    logger.info(`${req.method} ${req.originalUrl} -> ${res.statusCode}`, { elapsedMs: Number(elapsedMs.toFixed(1)), requestId });
   });
   next();
 });

@@ -43,6 +43,12 @@ npm run dev
 ```
 
 > `backend/.env.example` は `docker-compose.yml` のDB初期値（`postgres/postgres`, `prediction_game`）に合わせています。
+> 追加で `LOG_DIR` を指定すると、backend はコンソール出力に加えてログファイルも保存します（既定: `backend/logs/`）。
+
+## Backend logs
+- request / warn / error は `backend/logs/app.log` に保存されます。
+- error レベルは `backend/logs/error.log` にも保存されます。
+- 保存先は `.env` の `LOG_DIR` で変更できます。
 
 ## Seeded sample data
 - Demo user id (`x-user-id`): `usr_demo_1`
