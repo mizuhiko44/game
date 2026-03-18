@@ -72,7 +72,7 @@ export async function settleEvent(req: Request, res: Response) {
       }
     }
 
-    await tx.event.update({ where: { id: parsed.eventId }, data: { status: "settled" } });
+    await tx.event.update({ where: { id: parsed.eventId }, data: { status: "closed" } });
     return {
       idempotent: false,
       eventResult,

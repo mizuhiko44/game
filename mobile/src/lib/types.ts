@@ -5,6 +5,8 @@ export type User = {
   totalPoints: number;
 };
 
+export type EventOption = { id: string; label: string; sortOrder?: number };
+
 export type EventItem = {
   id: string;
   title: string;
@@ -14,12 +16,41 @@ export type EventItem = {
   voteEndAt: string;
   resultAt?: string;
   minBetPoints: number;
-  options?: Array<{ id: string; label: string; sortOrder?: number }>;
+  participantCount?: number;
+  options?: EventOption[];
 };
 
 export type EventDetailPayload = EventItem & {
   alreadyVoted: boolean;
   popularity: Array<{ optionId: string; _count: number }>;
+};
+
+export type EventParticipantsPayload = {
+  eventId: string;
+  eventTitle: string;
+  participantCount: number;
+  participants: Array<{
+    voteId: string;
+    joinedAt: string;
+    status: string;
+    user: { id: string; nickname: string; regionCode: string };
+    option: { id: string; label: string };
+  }>;
+};
+
+export type AdminCreateEventPayload = {
+  eventType: "global" | "local";
+  regionCode?: string;
+  category: "sports" | "economy" | "entertainment" | "local";
+  title: string;
+  description: string;
+  startAt?: string;
+  voteEndAt: string;
+  resultAt: string;
+  minBetPoints: number;
+  rewardItemId?: string;
+  rewardItemQuantity?: number;
+  options: string[];
 };
 
 export type VoteHistoryItem = {
@@ -54,7 +85,6 @@ export type AvatarPayload = {
   };
   items: Array<{ id: string; quantity: number; item: { id: string; name: string; expValue: number } }>;
 };
-
 
 export type AdminSettleResponse = {
   idempotent: boolean;

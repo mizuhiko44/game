@@ -12,7 +12,9 @@ const routeSummary = {
   protected: [
     "GET /api/home",
     "GET /api/events",
+    "POST /api/admin/events",
     "GET /api/events/:eventId",
+    "GET /api/events/:eventId/participants",
     "POST /api/votes",
     "GET /api/votes/history",
     "GET /api/results",

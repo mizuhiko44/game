@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { onboarding } from "../modules/users/users.controller";
 import { getHome } from "../modules/home/home.controller";
-import { getEventDetail, listEvents } from "../modules/events/events.controller";
+import { createEvent, getEventDetail, listEventParticipants, listEvents } from "../modules/events/events.controller";
 import { createVote, voteHistory } from "../modules/votes/votes.controller";
 import { listResults } from "../modules/results/results.controller";
 import { getAvatar, levelUpAvatar } from "../modules/avatar/avatar.controller";
@@ -16,7 +16,9 @@ router.post("/users/onboarding", onboarding);
 router.use(authMiddleware);
 router.get("/home", getHome);
 router.get("/events", listEvents);
+router.post("/admin/events", createEvent);
 router.get("/events/:eventId", getEventDetail);
+router.get("/events/:eventId/participants", listEventParticipants);
 router.post("/votes", createVote);
 router.get("/votes/history", voteHistory);
 router.get("/results", listResults);
