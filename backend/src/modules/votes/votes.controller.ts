@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { AuthedRequest } from "../../middlewares/auth";
 import { HttpError } from "../../middlewares/error";
+import { syncEventLifecycleInTx, syncEventLifecycles } from "../events/event-lifecycle";
 
 const voteSchema = z.object({
   eventId: z.string(),
@@ -17,7 +18,7 @@ export async function createVote(req: AuthedRequest, res: Response) {
     const [user, avatar, event] = await Promise.all([
       tx.user.findUniqueOrThrow({ where: { id: req.userId } }),
       tx.avatar.findUnique({ where: { userId: req.userId }, include: { passiveEffects: true } }),
-      tx.event.findUnique({ where: { id: parsed.eventId } }),
+      syncEventLifecycleInTx(tx, parsed.eventId),
     ]);
 
     if (!event) throw new HttpError(403, "event closed");
@@ -68,6 +69,8 @@ export async function createVote(req: AuthedRequest, res: Response) {
 }
 
 export async function voteHistory(req: AuthedRequest, res: Response) {
+  await syncEventLifecycles();
+
   const history = await prisma.vote.findMany({ where: { userId: req.userId }, include: { event: true, option: true }, orderBy: { createdAt: "desc" } });
   return res.json(history);
 }

@@ -52,7 +52,7 @@ export function AdminScreen({ userId }: { userId?: string }) {
     if (!userId) return;
     const payload = await apiRequest<EventDetailPayload>(`/events/${currentEventId}`, { userId });
     setDetail(payload);
-    setWinningOptionId(payload.options?.[0]?.id);
+    setWinningOptionId(payload.result?.winningOptionId ?? payload.options?.[0]?.id);
   };
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export function AdminScreen({ userId }: { userId?: string }) {
     refreshDetail(selectedEventId).catch((e) => setError((e as Error).message));
   }, [selectedEventId, userId]);
 
-  const pendingEvents = useMemo(() => events.filter((event) => !["closed", "settled"].includes(event.status)), [events]);
+  const pendingEvents = useMemo(() => events.filter((event) => event.status !== "settled"), [events]);
 
   const submitCreate = async () => {
     if (!userId) return;
@@ -106,7 +106,11 @@ export function AdminScreen({ userId }: { userId?: string }) {
         body: { eventId: selectedEventId, winningOptionId },
       });
       setSettleResult(result);
-      setMessage("結果を確定しました。イベント状態は closed です。");
+      setMessage(
+        result.settlementTriggered
+          ? "結果を登録し、resultAt 到達済みのため自動精算しました。"
+          : "結果を登録しました。resultAt 到達後に自動精算されます。"
+      );
       await refreshEvents();
       await refreshDetail(selectedEventId);
     } catch (e) {
@@ -182,7 +186,7 @@ export function AdminScreen({ userId }: { userId?: string }) {
         {!registeredUsers.length && <Text style={{ color: "#AAB4D4" }}>登録者はいません。</Text>}
       </View>
 
-      <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 20 }}>結果未確定イベント</Text>
+      <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 20 }}>結果未精算イベント</Text>
       {pendingEvents.map((event) => (
         <Pressable key={event.id} onPress={() => setSelectedEventId(event.id)} style={{ paddingVertical: 6 }}>
           <Text style={{ color: selectedEventId === event.id ? "#5BA7FF" : "#F4F7FF" }}>
@@ -190,15 +194,18 @@ export function AdminScreen({ userId }: { userId?: string }) {
           </Text>
         </Pressable>
       ))}
-      {!pendingEvents.length && <Text style={{ color: "#AAB4D4" }}>未確定イベントはありません。</Text>}
+      {!pendingEvents.length && <Text style={{ color: "#AAB4D4" }}>未精算イベントはありません。</Text>}
 
       {detail && (
         <>
           <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 12 }}>選択中イベント</Text>
           <Text style={{ color: "#F4F7FF" }}>title: {detail.title}</Text>
           <Text style={{ color: "#F4F7FF" }}>status: {detail.status}</Text>
+          <Text style={{ color: "#F4F7FF" }}>voteEndAt: {detail.voteEndAt}</Text>
+          <Text style={{ color: "#F4F7FF" }}>resultAt: {detail.resultAt ?? "-"}</Text>
           <Text style={{ color: "#F4F7FF" }}>participants: {detail.participantCount ?? 0}</Text>
           <Text style={{ color: "#F4F7FF" }}>alreadyVoted(by admin user): {String(detail.alreadyVoted)}</Text>
+          <Text style={{ color: "#F4F7FF" }}>registered winning option: {detail.result?.winningOption?.label ?? "未登録"}</Text>
 
           <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 12 }}>正解選択肢を選択</Text>
           {detail.options?.map((option) => (
@@ -209,23 +216,25 @@ export function AdminScreen({ userId }: { userId?: string }) {
 
           <Pressable
             onPress={submitSettle}
-            disabled={["closed", "settled"].includes(detail.status) || !winningOptionId}
+            disabled={detail.status === "settled" || !winningOptionId}
             style={{
-              backgroundColor: ["closed", "settled"].includes(detail.status) || !winningOptionId ? "#4C5A80" : "#5BA7FF",
+              backgroundColor: detail.status === "settled" || !winningOptionId ? "#4C5A80" : "#5BA7FF",
               padding: 12,
               borderRadius: 8,
               marginTop: 10,
             }}
           >
-            <Text style={{ color: "#0B1020", textAlign: "center", fontWeight: "700" }}>結果を確定する</Text>
+            <Text style={{ color: "#0B1020", textAlign: "center", fontWeight: "700" }}>正解を登録する</Text>
           </Pressable>
         </>
       )}
 
       {settleResult && (
         <>
-          <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 16 }}>確定サマリー</Text>
+          <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 16 }}>結果登録サマリー</Text>
           <Text style={{ color: "#F4F7FF" }}>idempotent: {String(settleResult.idempotent)}</Text>
+          <Text style={{ color: "#F4F7FF" }}>settlementTriggered: {String(settleResult.settlementTriggered)}</Text>
+          <Text style={{ color: "#F4F7FF" }}>eventStatus: {settleResult.eventStatus}</Text>
           <Text style={{ color: "#F4F7FF" }}>processedVoteCount: {settleResult.processedVoteCount}</Text>
           <Text style={{ color: "#F4F7FF" }}>winnerCount: {settleResult.winnerCount}</Text>
           <Text style={{ color: "#F4F7FF" }}>totalRewardPoints: {settleResult.totalRewardPoints}</Text>

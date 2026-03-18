@@ -128,6 +128,8 @@ export type MyPagePayload = {
 
 export type AdminSettleResponse = {
   idempotent: boolean;
+  settlementTriggered: boolean;
+  eventStatus: string;
   eventResult: {
     id: string;
     eventId: string;

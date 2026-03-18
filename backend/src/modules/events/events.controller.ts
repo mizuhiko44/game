@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { AuthedRequest } from "../../middlewares/auth";
 import { HttpError } from "../../middlewares/error";
+import { syncEventLifecycleInTx, syncEventLifecycles } from "./event-lifecycle";
 
 const createEventSchema = z
   .object({
@@ -30,10 +31,13 @@ export async function listEvents(req: AuthedRequest, res: Response) {
   const { type, status, regionCode } = req.query;
   const now = new Date();
   const normalizedStatus = typeof status === "string" ? status : undefined;
+
+  await syncEventLifecycles(now);
+
   const events = await prisma.event.findMany({
     where: {
       eventType: type as EventType | undefined,
-      status: normalizedStatus as any,
+      ...(normalizedStatus === "closed" ? { status: { in: ["closed", "settled"] } } : { status: normalizedStatus as any }),
       regionCode: typeof regionCode === "string" ? regionCode : undefined,
       ...(normalizedStatus === "open" ? { startAt: { lte: now }, voteEndAt: { gt: now } } : {}),
     },
@@ -70,6 +74,9 @@ export async function listEvents(req: AuthedRequest, res: Response) {
 
 export async function getEventDetail(req: AuthedRequest, res: Response) {
   const eventId = req.params.eventId;
+
+  await prisma.$transaction((tx) => syncEventLifecycleInTx(tx, eventId));
+
   const event = await prisma.event.findUniqueOrThrow({
     where: { id: eventId },
     include: { options: true, votes: true, result: { include: { winningOption: true } } },
@@ -87,6 +94,8 @@ export async function getEventDetail(req: AuthedRequest, res: Response) {
 
 export async function listEventParticipants(req: AuthedRequest, res: Response) {
   const eventId = req.params.eventId;
+
+  await prisma.$transaction((tx) => syncEventLifecycleInTx(tx, eventId));
   const event = await prisma.event.findUnique({ where: { id: eventId }, select: { id: true, title: true } });
   if (!event) throw new HttpError(404, "event not found");
 
