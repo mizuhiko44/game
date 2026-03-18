@@ -1,5 +1,5 @@
 import { EventCategory, EventType } from "@prisma/client";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { AuthedRequest } from "../../middlewares/auth";
@@ -26,7 +26,7 @@ const createEventSchema = z
     }
   });
 
-export async function listEvents(req: Request, res: Response) {
+export async function listEvents(req: AuthedRequest, res: Response) {
   const { type, status, regionCode } = req.query;
   const events = await prisma.event.findMany({
     where: {
@@ -34,21 +34,43 @@ export async function listEvents(req: Request, res: Response) {
       status: status as any,
       regionCode: typeof regionCode === "string" ? regionCode : undefined,
     },
-    include: { options: true, _count: { select: { votes: true } } },
-    orderBy: { voteEndAt: "asc" },
+    include: {
+      options: true,
+      result: { include: { winningOption: true } },
+      votes: {
+        where: { userId: req.userId },
+        include: { option: true },
+        take: 1,
+      },
+      _count: { select: { votes: true } },
+    },
+    orderBy: [{ status: "asc" }, { voteEndAt: "asc" }],
   });
 
   return res.json(
-    events.map(({ _count, ...event }) => ({
+    events.map(({ _count, votes, ...event }) => ({
       ...event,
       participantCount: _count.votes,
+      myVote: votes[0]
+        ? {
+            id: votes[0].id,
+            optionId: votes[0].optionId,
+            optionLabel: votes[0].option.label,
+            inputBetPoints: votes[0].inputBetPoints,
+            status: votes[0].status,
+            rewardPoints: votes[0].rewardPoints,
+          }
+        : null,
     }))
   );
 }
 
 export async function getEventDetail(req: AuthedRequest, res: Response) {
   const eventId = req.params.eventId;
-  const event = await prisma.event.findUniqueOrThrow({ where: { id: eventId }, include: { options: true, votes: true } });
+  const event = await prisma.event.findUniqueOrThrow({
+    where: { id: eventId },
+    include: { options: true, votes: true, result: { include: { winningOption: true } } },
+  });
   const voteCounts = await prisma.vote.groupBy({ by: ["optionId"], where: { eventId }, _count: true });
   const alreadyVoted = event.votes.some((v) => v.userId === req.userId);
 
@@ -88,7 +110,7 @@ export async function listEventParticipants(req: AuthedRequest, res: Response) {
   });
 }
 
-export async function createEvent(req: Request, res: Response) {
+export async function createEvent(req: AuthedRequest, res: Response) {
   const parsed = createEventSchema.parse(req.body);
 
   const uniqueOptions = parsed.options.filter((label, index, rows) => rows.findIndex((row) => row === label) === index);
@@ -126,8 +148,8 @@ export async function createEvent(req: Request, res: Response) {
         })),
       },
     },
-    include: { options: true },
+    include: { options: true, result: { include: { winningOption: true } } },
   });
 
-  return res.status(201).json(event);
+  return res.status(201).json({ ...event, participantCount: 0, myVote: null });
 }

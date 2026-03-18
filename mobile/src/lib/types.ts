@@ -17,7 +17,23 @@ export type EventItem = {
   resultAt?: string;
   minBetPoints: number;
   participantCount?: number;
+  category?: "sports" | "economy" | "entertainment" | "local";
+  regionCode?: string | null;
   options?: EventOption[];
+  result?: {
+    id: string;
+    winningOptionId: string;
+    settledAt: string;
+    winningOption?: { id: string; label: string };
+  } | null;
+  myVote?: {
+    id: string;
+    optionId: string;
+    optionLabel: string;
+    inputBetPoints: number;
+    status: string;
+    rewardPoints: number;
+  } | null;
 };
 
 export type EventDetailPayload = EventItem & {
@@ -62,7 +78,15 @@ export type VoteHistoryItem = {
   status: string;
   rewardPoints: number;
   createdAt?: string;
-  event: { title: string };
+  event: {
+    title: string;
+    status?: string;
+    result?: {
+      winningOptionId: string;
+      settledAt: string;
+      winningOption?: { id: string; label: string };
+    } | null;
+  };
   option: { label: string };
 };
 
@@ -84,6 +108,17 @@ export type AvatarPayload = {
     passiveEffects: Array<{ effectType: string; effectValue: number }>;
   };
   items: Array<{ id: string; quantity: number; item: { id: string; name: string; expValue: number } }>;
+};
+
+export type MyPagePayload = {
+  nickname: string;
+  regionCode: string;
+  totalPoints: number;
+  totalVotes: number;
+  hitRate: number;
+  avatarLevel: number;
+  winningStreak: number;
+  bestWinningStreak: number;
 };
 
 export type AdminSettleResponse = {
