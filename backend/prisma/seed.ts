@@ -14,6 +14,8 @@ async function main() {
     },
   });
 
+  await prisma.event.deleteMany({ where: { id: "evt_local_1" } });
+
   const eventGlobal = await prisma.event.upsert({
     where: { id: "evt_global_1" },
     update: {
@@ -37,30 +39,6 @@ async function main() {
     },
   });
 
-  const eventLocal = await prisma.event.upsert({
-    where: { id: "evt_local_1" },
-    update: {
-      status: "open",
-      voteEndAt: new Date(Date.now() + 1000 * 60 * 60 * 12),
-      resultAt: new Date(Date.now() + 1000 * 60 * 60 * 36),
-    },
-    create: {
-      id: "evt_local_1",
-      eventType: "local",
-      regionCode: "kanagawa",
-      category: "local",
-      title: "神奈川イベント来場者数予想",
-      description: "今週末のイベント来場者数が目標を超えるか予想してください。",
-      status: "open",
-      startAt: new Date(),
-      voteEndAt: new Date(Date.now() + 1000 * 60 * 60 * 12),
-      resultAt: new Date(Date.now() + 1000 * 60 * 60 * 36),
-      minBetPoints: 30,
-      rewardItemId: expItem.id,
-      rewardItemQuantity: 1,
-    },
-  });
-
   await prisma.eventOption.upsert({
     where: { id: "opt_global_1" },
     update: { label: "日本が勝つ", sortOrder: 1, eventId: eventGlobal.id },
@@ -77,18 +55,6 @@ async function main() {
     where: { id: "opt_global_3" },
     update: { label: "相手が勝つ", sortOrder: 3, eventId: eventGlobal.id },
     create: { id: "opt_global_3", eventId: eventGlobal.id, label: "相手が勝つ", sortOrder: 3 },
-  });
-
-  await prisma.eventOption.upsert({
-    where: { id: "opt_local_1" },
-    update: { label: "目標以上", sortOrder: 1, eventId: eventLocal.id },
-    create: { id: "opt_local_1", eventId: eventLocal.id, label: "目標以上", sortOrder: 1 },
-  });
-
-  await prisma.eventOption.upsert({
-    where: { id: "opt_local_2" },
-    update: { label: "目標未満", sortOrder: 2, eventId: eventLocal.id },
-    create: { id: "opt_local_2", eventId: eventLocal.id, label: "目標未満", sortOrder: 2 },
   });
 
   const user = await prisma.user.upsert({
@@ -129,7 +95,6 @@ async function main() {
   console.log("Seed completed.");
   console.log("Demo user id (x-user-id): usr_demo_1");
   console.log("Sample global event id:", eventGlobal.id);
-  console.log("Sample local event id:", eventLocal.id);
 }
 
 main()

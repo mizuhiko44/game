@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { onboarding } from "../modules/users/users.controller";
+import { listRegisteredUsers, onboarding } from "../modules/users/users.controller";
 import { getHome } from "../modules/home/home.controller";
 import { createEvent, getEventDetail, listEventParticipants, listEvents } from "../modules/events/events.controller";
 import { createVote, voteHistory } from "../modules/votes/votes.controller";
@@ -17,6 +17,7 @@ router.use(authMiddleware);
 router.get("/home", getHome);
 router.get("/events", listEvents);
 router.post("/admin/events", createEvent);
+router.get("/admin/users", listRegisteredUsers);
 router.get("/events/:eventId", getEventDetail);
 router.get("/events/:eventId/participants", listEventParticipants);
 router.post("/votes", createVote);

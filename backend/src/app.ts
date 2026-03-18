@@ -13,6 +13,7 @@ const routeSummary = {
     "GET /api/home",
     "GET /api/events",
     "POST /api/admin/events",
+    "GET /api/admin/users",
     "GET /api/events/:eventId",
     "GET /api/events/:eventId/participants",
     "POST /api/votes",

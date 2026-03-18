@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { ScreenTemplate } from "../components/ScreenTemplate";
 import { apiRequest } from "../lib/api";
-import { AdminCreateEventPayload, AdminSettleResponse, EventDetailPayload, EventItem } from "../lib/types";
+import { AdminCreateEventPayload, AdminRegisteredUser, AdminSettleResponse, EventDetailPayload, EventItem } from "../lib/types";
 
 const INPUT_STYLE = { color: "white", borderWidth: 1, borderColor: "#2B3554", padding: 10, borderRadius: 8 } as const;
+const CARD_STYLE = { backgroundColor: "#141D34", borderRadius: 10, padding: 12, gap: 6 } as const;
 const EVENT_TYPES: AdminCreateEventPayload["eventType"][] = ["global", "local"];
 const CATEGORIES: AdminCreateEventPayload["category"][] = ["sports", "economy", "entertainment", "local"];
 
@@ -15,6 +16,7 @@ function toLocalDateTimeValue(date: Date) {
 
 export function AdminScreen({ userId }: { userId?: string }) {
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [registeredUsers, setRegisteredUsers] = useState<AdminRegisteredUser[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
   const [detail, setDetail] = useState<EventDetailPayload | null>(null);
   const [winningOptionId, setWinningOptionId] = useState<string | undefined>();
@@ -40,6 +42,12 @@ export function AdminScreen({ userId }: { userId?: string }) {
     setEvents(rows);
   };
 
+  const refreshUsers = async () => {
+    if (!userId) return;
+    const rows = await apiRequest<AdminRegisteredUser[]>("/admin/users", { userId });
+    setRegisteredUsers(rows);
+  };
+
   const refreshDetail = async (currentEventId: string) => {
     if (!userId) return;
     const payload = await apiRequest<EventDetailPayload>(`/events/${currentEventId}`, { userId });
@@ -49,6 +57,7 @@ export function AdminScreen({ userId }: { userId?: string }) {
 
   useEffect(() => {
     refreshEvents().catch((e) => setError((e as Error).message));
+    refreshUsers().catch((e) => setError((e as Error).message));
   }, [userId]);
 
   useEffect(() => {
@@ -133,10 +142,12 @@ export function AdminScreen({ userId }: { userId?: string }) {
         <TextInput value={title} onChangeText={setTitle} placeholder="title" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
         <Text style={{ color: "#AAB4D4" }}>description: 補足説明（任意）</Text>
         <TextInput value={description} onChangeText={setDescription} placeholder="description (optional)" placeholderTextColor="#7E89AF" multiline style={INPUT_STYLE} />
-        {eventType === "local" && (<>
-          <Text style={{ color: "#AAB4D4" }}>regionCode: 地域イベント対象の地域コード</Text>
-          <TextInput value={regionCode} onChangeText={setRegionCode} placeholder="regionCode" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
-        </>)}
+        {eventType === "local" && (
+          <>
+            <Text style={{ color: "#AAB4D4" }}>regionCode: 地域イベント対象の地域コード</Text>
+            <TextInput value={regionCode} onChangeText={setRegionCode} placeholder="regionCode" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
+          </>
+        )}
         <Text style={{ color: "#AAB4D4" }}>minBetPoints: 最低ベット額</Text>
         <TextInput value={minBetPoints} onChangeText={setMinBetPoints} placeholder="minBetPoints" placeholderTextColor="#7E89AF" keyboardType="numeric" style={INPUT_STYLE} />
         <Text style={{ color: "#AAB4D4" }}>rewardItemId: 報酬アイテムID（任意）</Text>
@@ -154,6 +165,21 @@ export function AdminScreen({ userId }: { userId?: string }) {
         <Pressable onPress={submitCreate} style={{ backgroundColor: "#5BA7FF", padding: 12, borderRadius: 8 }}>
           <Text style={{ color: "#0B1020", textAlign: "center", fontWeight: "700" }}>イベントを作成する</Text>
         </Pressable>
+      </View>
+
+      <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 20 }}>登録者リスト（最大100人）</Text>
+      <View style={{ gap: 8 }}>
+        {registeredUsers.map((registeredUser) => (
+          <View key={registeredUser.id} style={CARD_STYLE}>
+            <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>{registeredUser.nickname}</Text>
+            <Text style={{ color: "#AAB4D4" }}>userId: {registeredUser.id}</Text>
+            <Text style={{ color: "#AAB4D4" }}>region: {registeredUser.regionCode}</Text>
+            <Text style={{ color: "#AAB4D4" }}>points: {registeredUser.totalPoints}</Text>
+            <Text style={{ color: "#AAB4D4" }}>avatar: {registeredUser.avatarType ?? "-"}</Text>
+            <Text style={{ color: "#AAB4D4" }}>createdAt: {registeredUser.createdAt}</Text>
+          </View>
+        ))}
+        {!registeredUsers.length && <Text style={{ color: "#AAB4D4" }}>登録者はいません。</Text>}
       </View>
 
       <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 20 }}>結果未確定イベント</Text>

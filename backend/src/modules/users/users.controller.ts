@@ -50,3 +50,22 @@ export async function onboarding(req: Request, res: Response) {
 
   return res.status(201).json(user);
 }
+
+export async function listRegisteredUsers(_req: Request, res: Response) {
+  const users = await prisma.user.findMany({
+    take: 100,
+    orderBy: { createdAt: "desc" },
+    include: { avatar: true },
+  });
+
+  return res.json(
+    users.map((user) => ({
+      id: user.id,
+      nickname: user.nickname,
+      regionCode: user.regionCode,
+      totalPoints: user.totalPoints,
+      createdAt: user.createdAt,
+      avatarType: user.avatar?.avatarType ?? null,
+    }))
+  );
+}

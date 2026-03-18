@@ -5,6 +5,11 @@ export type User = {
   totalPoints: number;
 };
 
+export type AdminRegisteredUser = User & {
+  createdAt: string;
+  avatarType?: string | null;
+};
+
 export type EventOption = { id: string; label: string; sortOrder?: number };
 
 export type EventItem = {
