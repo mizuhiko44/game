@@ -11,12 +11,13 @@ const onboardingSchema = z.object({
 
 export async function onboarding(req: Request, res: Response) {
   const parsed = onboardingSchema.parse(req.body);
+  const normalizedNickname = parsed.nickname.trim().toLowerCase();
 
-  const existingUser = await prisma.user.findFirst({
-    where: { nickname: { equals: parsed.nickname, mode: "insensitive" } },
-    select: { id: true },
+  const existingUsers = await prisma.user.findMany({
+    select: { nickname: true },
   });
-  if (existingUser) throw new HttpError(409, "nickname already exists");
+  const duplicateExists = existingUsers.some((user) => user.nickname.trim().toLowerCase() === normalizedNickname);
+  if (duplicateExists) throw new HttpError(409, "nickname already exists");
 
   const user = await prisma.$transaction(async (tx) => {
     const created = await tx.user.create({
