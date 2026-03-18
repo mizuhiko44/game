@@ -9,6 +9,10 @@ const onboardingSchema = z.object({
   avatarType: z.string().trim().min(1),
 });
 
+const loginSchema = z.object({
+  nickname: z.string().trim().min(1).max(24),
+});
+
 export async function onboarding(req: Request, res: Response) {
   const parsed = onboardingSchema.parse(req.body);
   const normalizedNickname = parsed.nickname.trim().toLowerCase();
@@ -49,6 +53,17 @@ export async function onboarding(req: Request, res: Response) {
   });
 
   return res.status(201).json(user);
+}
+
+export async function login(req: Request, res: Response) {
+  const parsed = loginSchema.parse(req.body);
+  const normalizedNickname = parsed.nickname.trim().toLowerCase();
+
+  const users = await prisma.user.findMany();
+  const user = users.find((row) => row.nickname.trim().toLowerCase() === normalizedNickname);
+  if (!user) throw new HttpError(404, "user not found");
+
+  return res.json(user);
 }
 
 export async function listRegisteredUsers(_req: Request, res: Response) {

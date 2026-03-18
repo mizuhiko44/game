@@ -8,7 +8,7 @@ import { logger } from "./lib/logger";
 export const app = express();
 
 const routeSummary = {
-  public: ["GET /", "GET /health", "GET /api", "POST /api/users/onboarding"],
+  public: ["GET /", "GET /health", "GET /api", "POST /api/users/onboarding", "POST /api/users/login"],
   protected: [
     "GET /api/home",
     "GET /api/events",

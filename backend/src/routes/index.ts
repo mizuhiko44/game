@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listRegisteredUsers, onboarding } from "../modules/users/users.controller";
+import { listRegisteredUsers, login, onboarding } from "../modules/users/users.controller";
 import { getHome } from "../modules/home/home.controller";
 import { createEvent, getEventDetail, listEventParticipants, listEvents } from "../modules/events/events.controller";
 import { createVote, voteHistory } from "../modules/votes/votes.controller";
@@ -12,6 +12,7 @@ import { authMiddleware } from "../middlewares/auth";
 const router = Router();
 
 router.post("/users/onboarding", onboarding);
+router.post("/users/login", login);
 
 router.use(authMiddleware);
 router.get("/home", getHome);
