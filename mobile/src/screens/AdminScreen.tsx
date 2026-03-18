@@ -129,15 +129,27 @@ export function AdminScreen({ userId }: { userId?: string }) {
             </Pressable>
           ))}
         </View>
+        <Text style={{ color: "#AAB4D4" }}>title: イベント名を入力</Text>
         <TextInput value={title} onChangeText={setTitle} placeholder="title" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
+        <Text style={{ color: "#AAB4D4" }}>description: 補足説明（任意）</Text>
         <TextInput value={description} onChangeText={setDescription} placeholder="description (optional)" placeholderTextColor="#7E89AF" multiline style={INPUT_STYLE} />
-        {eventType === "local" && <TextInput value={regionCode} onChangeText={setRegionCode} placeholder="regionCode" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />}
+        {eventType === "local" && (<>
+          <Text style={{ color: "#AAB4D4" }}>regionCode: 地域イベント対象の地域コード</Text>
+          <TextInput value={regionCode} onChangeText={setRegionCode} placeholder="regionCode" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
+        </>)}
+        <Text style={{ color: "#AAB4D4" }}>minBetPoints: 最低ベット額</Text>
         <TextInput value={minBetPoints} onChangeText={setMinBetPoints} placeholder="minBetPoints" placeholderTextColor="#7E89AF" keyboardType="numeric" style={INPUT_STYLE} />
+        <Text style={{ color: "#AAB4D4" }}>rewardItemId: 報酬アイテムID（任意）</Text>
         <TextInput value={rewardItemId} onChangeText={setRewardItemId} placeholder="rewardItemId (optional)" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
+        <Text style={{ color: "#AAB4D4" }}>rewardItemQuantity: 報酬個数</Text>
         <TextInput value={rewardItemQuantity} onChangeText={setRewardItemQuantity} placeholder="rewardItemQuantity" placeholderTextColor="#7E89AF" keyboardType="numeric" style={INPUT_STYLE} />
+        <Text style={{ color: "#AAB4D4" }}>startAt: 開始日時</Text>
         <TextInput value={startAt} onChangeText={setStartAt} placeholder="YYYY-MM-DDTHH:mm" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
+        <Text style={{ color: "#AAB4D4" }}>voteEndAt: 投票締切日時</Text>
         <TextInput value={voteEndAt} onChangeText={setVoteEndAt} placeholder="YYYY-MM-DDTHH:mm" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
+        <Text style={{ color: "#AAB4D4" }}>resultAt: 結果反映日時</Text>
         <TextInput value={resultAt} onChangeText={setResultAt} placeholder="YYYY-MM-DDTHH:mm" placeholderTextColor="#7E89AF" style={INPUT_STYLE} />
+        <Text style={{ color: "#AAB4D4" }}>options: 1行に1つずつ選択肢を入力</Text>
         <TextInput value={optionsText} onChangeText={setOptionsText} placeholder="1行1選択肢" placeholderTextColor="#7E89AF" multiline style={INPUT_STYLE} />
         <Pressable onPress={submitCreate} style={{ backgroundColor: "#5BA7FF", padding: 12, borderRadius: 8 }}>
           <Text style={{ color: "#0B1020", textAlign: "center", fontWeight: "700" }}>イベントを作成する</Text>

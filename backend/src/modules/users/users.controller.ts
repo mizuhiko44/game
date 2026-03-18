@@ -1,15 +1,22 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
+import { HttpError } from "../../middlewares/error";
 
 const onboardingSchema = z.object({
-  nickname: z.string().min(1).max(24),
-  regionCode: z.string().min(1),
-  avatarType: z.string().min(1),
+  nickname: z.string().trim().min(1).max(24),
+  regionCode: z.string().trim().min(1),
+  avatarType: z.string().trim().min(1),
 });
 
 export async function onboarding(req: Request, res: Response) {
   const parsed = onboardingSchema.parse(req.body);
+
+  const existingUser = await prisma.user.findFirst({
+    where: { nickname: { equals: parsed.nickname, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (existingUser) throw new HttpError(409, "nickname already exists");
 
   const user = await prisma.$transaction(async (tx) => {
     const created = await tx.user.create({

@@ -20,7 +20,7 @@ export function VoteHistoryScreen({ userId }: { userId?: string }) {
         <View key={row.id} style={CARD_STYLE}>
           <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>{row.title}</Text>
           <Text style={{ color: "#F4F7FF" }}>winning option: {row.result?.winningOption?.label ?? "未確定"}</Text>
-          <Text style={{ color: "#F4F7FF" }}>participants: {row.participantCount ?? 0}</Text>
+          <Text style={{ color: "#F4F7FF" }}>参加人数: {row.participantCount ?? 0}人</Text>
           <Text style={{ color: "#F4F7FF" }}>resultAt: {row.resultAt ?? "-"}</Text>
           <Text style={{ color: "#F4F7FF" }}>my vote: {row.myVote?.optionLabel ?? "未参加"}</Text>
           <Text style={{ color: row.myVote?.status === "won" ? "#8fe6a4" : row.myVote?.status === "lost" ? "#ff8f8f" : "#AAB4D4" }}>

@@ -74,65 +74,68 @@ export function VoteScreen({ userId, onComplete }: { userId?: string; onComplete
       {!rankedEvents.length && <Text style={{ color: "#AAB4D4" }}>投票可能な open イベントはありません。</Text>}
 
       {!!rankedEvents.length && (
-        <View style={{ gap: 8 }}>
-          <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>イベント選択</Text>
-          {rankedEvents.map((event, index) => (
-            <Pressable
-              key={event.id}
-              onPress={() => setEventId(event.id)}
-              style={{
-                ...CARD_STYLE,
-                borderWidth: 1,
-                borderColor: event.id === eventId ? "#5BA7FF" : "#2B3554",
-              }}
-            >
-              <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>{event.title}</Text>
-              <Text style={{ color: "#AAB4D4" }}>重要度ランク: #{index + 1}</Text>
-              <Text style={{ color: "#AAB4D4" }}>参加者: {event.participantCount ?? 0}人 / minBet: {event.minBetPoints}</Text>
-            </Pressable>
-          ))}
-        </View>
-      )}
-
-      {!!currentEvent && (
-        <View style={{ gap: 10 }}>
-          <View style={CARD_STYLE}>
-            <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>イベント名</Text>
-            <Text style={{ color: "#F4F7FF" }}>{currentEvent.title}</Text>
-            <Text style={{ color: "#AAB4D4" }}>重要度ランク: #{importanceRank}</Text>
-          </View>
-
-          <View style={CARD_STYLE}>
-            <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>イベント情報</Text>
-            <Text style={{ color: "#F4F7FF" }}>type: {currentEvent.eventType}</Text>
-            <Text style={{ color: "#F4F7FF" }}>category: {currentEvent.category ?? "-"}</Text>
-            <Text style={{ color: "#F4F7FF" }}>region: {currentEvent.regionCode ?? "global"}</Text>
-            <Text style={{ color: "#F4F7FF" }}>minBet: {currentEvent.minBetPoints}</Text>
-            <Text style={{ color: "#F4F7FF" }}>participants: {currentEvent.participantCount ?? 0}</Text>
-          </View>
-
-          <View style={CARD_STYLE}>
-            <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>スケジュール・説明</Text>
-            <Text style={{ color: "#F4F7FF" }}>voteEndAt: {currentEvent.voteEndAt}</Text>
-            <Text style={{ color: "#F4F7FF" }}>resultAt: {currentEvent.resultAt ?? "-"}</Text>
-            <Text style={{ color: "#F4F7FF" }}>{currentEvent.description ?? "説明なし"}</Text>
-          </View>
-
-          <View style={CARD_STYLE}>
-            <Text style={{ color: "#AAB4D4", fontWeight: "700" }}>選択肢</Text>
-            {currentOptions.map((option) => (
-              <Pressable key={option.id} onPress={() => setOptionId(option.id)} style={{ paddingVertical: 4 }}>
-                <Text style={{ color: option.id === optionId ? "#5BA7FF" : "#F4F7FF" }}>{option.label}</Text>
+        <>
+          <View style={{ gap: 8 }}>
+            <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>イベント選択</Text>
+            {rankedEvents.map((event, index) => (
+              <Pressable
+                key={event.id}
+                onPress={() => setEventId(event.id)}
+                style={{
+                  ...CARD_STYLE,
+                  borderWidth: 1,
+                  borderColor: event.id === eventId ? "#5BA7FF" : "#2B3554",
+                }}
+              >
+                <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>{event.title}</Text>
+                <Text style={{ color: "#AAB4D4" }}>重要度ランク: #{index + 1}</Text>
+                <Text style={{ color: "#AAB4D4" }}>参加者: {event.participantCount ?? 0}人 / minBet: {event.minBetPoints}</Text>
               </Pressable>
             ))}
           </View>
-        </View>
+
+          {!!currentEvent && (
+            <View style={{ gap: 10 }}>
+              <View style={CARD_STYLE}>
+                <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>イベント名</Text>
+                <Text style={{ color: "#F4F7FF" }}>{currentEvent.title}</Text>
+                <Text style={{ color: "#AAB4D4" }}>重要度ランク: #{importanceRank}</Text>
+              </View>
+
+              <View style={CARD_STYLE}>
+                <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>イベント情報</Text>
+                <Text style={{ color: "#F4F7FF" }}>type: {currentEvent.eventType}</Text>
+                <Text style={{ color: "#F4F7FF" }}>category: {currentEvent.category ?? "-"}</Text>
+                <Text style={{ color: "#F4F7FF" }}>region: {currentEvent.regionCode ?? "global"}</Text>
+                <Text style={{ color: "#F4F7FF" }}>minBet: {currentEvent.minBetPoints}</Text>
+                <Text style={{ color: "#F4F7FF" }}>participants: {currentEvent.participantCount ?? 0}</Text>
+              </View>
+
+              <View style={CARD_STYLE}>
+                <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>スケジュール・説明</Text>
+                <Text style={{ color: "#F4F7FF" }}>voteEndAt: {currentEvent.voteEndAt}</Text>
+                <Text style={{ color: "#F4F7FF" }}>resultAt: {currentEvent.resultAt ?? "-"}</Text>
+                <Text style={{ color: "#F4F7FF" }}>{currentEvent.description ?? "説明なし"}</Text>
+              </View>
+
+              <View style={CARD_STYLE}>
+                <Text style={{ color: "#AAB4D4", fontWeight: "700" }}>選択肢</Text>
+                {currentOptions.map((option) => (
+                  <Pressable key={option.id} onPress={() => setOptionId(option.id)} style={{ paddingVertical: 4 }}>
+                    <Text style={{ color: option.id === optionId ? "#5BA7FF" : "#F4F7FF" }}>{option.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <TextInput value={betPoints} onChangeText={setBetPoints} keyboardType="numeric" style={INPUT_STYLE} />
+          <Pressable onPress={submit} disabled={!eventId || !optionId} style={{ backgroundColor: !eventId || !optionId ? "#4C5A80" : "#5BA7FF", padding: 12, borderRadius: 8 }}>
+            <Text style={{ color: "#0B1020", textAlign: "center", fontWeight: "700" }}>投票する</Text>
+          </Pressable>
+        </>
       )}
 
-      <TextInput value={betPoints} onChangeText={setBetPoints} keyboardType="numeric" style={INPUT_STYLE} />
-      <Pressable onPress={submit} disabled={!eventId || !optionId} style={{ backgroundColor: !eventId || !optionId ? "#4C5A80" : "#5BA7FF", padding: 12, borderRadius: 8 }}>
-        <Text style={{ color: "#0B1020", textAlign: "center", fontWeight: "700" }}>投票する</Text>
-      </Pressable>
       {!!message && <Text style={{ color: "#F4F7FF" }}>{message}</Text>}
     </ScreenTemplate>
   );

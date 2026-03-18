@@ -1,10 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, Text } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { ScreenTemplate } from "../components/ScreenTemplate";
 import { apiRequest } from "../lib/api";
 import { AvatarPayload } from "../lib/types";
 
 const EXP_ITEM_ID = "itm_exp_small";
+const CARD_STYLE = { backgroundColor: "#141D34", borderRadius: 12, padding: 16, gap: 8 } as const;
+
+function getAvatarFace(avatarType?: string) {
+  switch ((avatarType ?? "").toLowerCase()) {
+    case "cat":
+      return { face: "ฅ^•ﻌ•^ฅ", label: "Cat Hero" };
+    case "rabbit":
+      return { face: "(/・ω・)/", label: "Rabbit Idol" };
+    case "fox":
+      return { face: "^ↀᴥↀ^", label: "Fox Mystic" };
+    case "dog":
+      return { face: "U・ᴥ・U", label: "Dog Ranger" };
+    default:
+      return { face: "( •̀ ω •́ )✧", label: "Original Avatar" };
+  }
+}
 
 export function AvatarScreen({ userId }: { userId?: string }) {
   const [payload, setPayload] = useState<AvatarPayload | null>(null);
@@ -24,6 +40,8 @@ export function AvatarScreen({ userId }: { userId?: string }) {
     const row = payload?.items.find((i) => i.item.id === EXP_ITEM_ID);
     return row?.quantity ?? 0;
   }, [payload]);
+
+  const avatarVisual = useMemo(() => getAvatarFace(payload?.avatar.avatarType), [payload?.avatar.avatarType]);
 
   const levelUp = async () => {
     if (!userId) return;
@@ -49,11 +67,21 @@ export function AvatarScreen({ userId }: { userId?: string }) {
     <ScreenTemplate title="Avatar">
       {payload && (
         <>
-          <Text style={{ color: "#F4F7FF" }}>type: {payload.avatar.avatarType}</Text>
-          <Text style={{ color: "#F4F7FF" }}>level: {payload.avatar.level}</Text>
-          <Text style={{ color: "#F4F7FF" }}>exp: {payload.avatar.exp}</Text>
-          <Text style={{ color: "#F4F7FF" }}>exp item qty: {expItemQuantity}</Text>
-          <Text style={{ color: "#F4F7FF" }}>items: {payload.items.map((i) => `${i.item.name} x${i.quantity}`).join(", ") || "none"}</Text>
+          <View style={{ ...CARD_STYLE, alignItems: "center" }}>
+            <Text style={{ color: "#F7D774", fontSize: 18, fontWeight: "700" }}>{avatarVisual.label}</Text>
+            <View style={{ width: 180, height: 180, borderRadius: 90, backgroundColor: "#233054", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#5BA7FF" }}>
+              <Text style={{ color: "#F4F7FF", fontSize: 42 }}>{avatarVisual.face}</Text>
+            </View>
+            <Text style={{ color: "#AAB4D4" }}>2D character preview</Text>
+          </View>
+
+          <View style={CARD_STYLE}>
+            <Text style={{ color: "#F4F7FF" }}>type: {payload.avatar.avatarType}</Text>
+            <Text style={{ color: "#F4F7FF" }}>level: {payload.avatar.level}</Text>
+            <Text style={{ color: "#F4F7FF" }}>exp: {payload.avatar.exp}</Text>
+            <Text style={{ color: "#F4F7FF" }}>exp item qty: {expItemQuantity}</Text>
+            <Text style={{ color: "#F4F7FF" }}>items: {payload.items.map((i) => `${i.item.name} x${i.quantity}`).join(", ") || "none"}</Text>
+          </View>
         </>
       )}
       <Pressable
