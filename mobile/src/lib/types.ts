@@ -54,3 +54,18 @@ export type AvatarPayload = {
   };
   items: Array<{ id: string; quantity: number; item: { id: string; name: string; expValue: number } }>;
 };
+
+
+export type AdminSettleResponse = {
+  idempotent: boolean;
+  eventResult: {
+    id: string;
+    eventId: string;
+    winningOptionId: string;
+    settledAt: string;
+  };
+  processedVoteCount: number;
+  winnerCount: number;
+  totalRewardPoints: number;
+  rewardedItemUserCount: number;
+};

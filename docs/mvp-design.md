@@ -57,6 +57,7 @@ docs/
 - `POST /api/avatar/level-up`
 - `GET /api/me`
 - `POST /api/admin/events/settle`
+  - 返却: `idempotent`, `processedVoteCount`, `winnerCount`, `totalRewardPoints`, `rewardedItemUserCount`
 
 ### 5.1 開発支援エンドポイント
 - `GET /` : APIメタ情報
@@ -75,6 +76,7 @@ docs/
 - ResultDetail: 選択結果の詳細表示に対応（正解選択肢は未表示）
 - Avatar: 取得API + 育成API連携済み
 - MyPage: `/api/me` 連携済み
+- Admin: 未確定イベント選択、正解選択肢入力、結果確定サマリー表示に対応
 
 ## 7. 直近の改善反映（運用知見）
 
@@ -139,6 +141,7 @@ docs/
 
 
 ## 11. 現状の未実装 / 要改善ポイント（MVP内）
+- Admin: 管理者権限分離は未実装（現在はMVPの簡易認証で利用可能）
 - EventDetail: 人気比率の見せ方は簡易表示（グラフUI未対応）
 - ResultDetail: 正解選択肢の表示は未対応（API拡張が必要）
 - VoteComplete: 推奨イベント導線・結果予定時刻の表示が未対応

@@ -17,6 +17,7 @@ MVP構成:
 
 ## Mobile API connection status
 - `mobile/` は UI雛形のみではなく、MVPの主要APIに接続済みです。
+- 管理者向けの簡易 Admin 画面を追加し、結果未確定イベントの選択・正解入力・結果確定サマリー確認が可能です。
 - 実装済み: onboarding, home, events, vote作成, vote history, results, avatar取得/level-up, my page。
 - APIベースURLは `mobile/src/lib/api.ts` の `API_BASE_URL` を利用します。
   - Web開発の既定値: `http://localhost:3000`
@@ -88,6 +89,11 @@ curl -X POST http://localhost:3000/api/votes \
 curl http://localhost:3000/api/votes/history \
   -H "x-user-id: usr_demo_1"
 ```
+
+### Mobile Admin UI (MVP)
+- `Admin` タブから未確定イベントを選択し、正解選択肢を指定して結果確定できます。
+- 現在のMVPでは `x-user-id` ベースの簡易認証のため、管理者権限分離は未実装です（将来対応）。
+- 結果確定後は `processedVoteCount`, `winnerCount`, `totalRewardPoints`, `rewardedItemUserCount` を確認できます。
 
 ### 5) Settle result (protected/admin endpoint in MVP)
 ```bash

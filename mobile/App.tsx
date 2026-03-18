@@ -11,6 +11,7 @@ import { ResultListScreen } from "./src/screens/ResultListScreen";
 import { EventDetailScreen } from "./src/screens/EventDetailScreen";
 import { ResultDetailScreen } from "./src/screens/ResultDetailScreen";
 import { VoteCompleteScreen } from "./src/screens/VoteCompleteScreen";
+import { AdminScreen } from "./src/screens/AdminScreen";
 import { User, VoteCreateResponse, VoteHistoryItem } from "./src/lib/types";
 
 const tabs = [
@@ -25,6 +26,7 @@ const tabs = [
   "ResultDetail",
   "Avatar",
   "MyPage",
+  "Admin",
 ] as const;
 type Tab = (typeof tabs)[number];
 
@@ -79,6 +81,7 @@ export default function App() {
       {tab === "ResultDetail" && <ResultDetailScreen result={selectedResult} />}
       {tab === "Avatar" && <AvatarScreen userId={user?.id} />}
       {tab === "MyPage" && <MyPageScreen userId={user?.id} />}
+      {tab === "Admin" && <AdminScreen userId={user?.id} />}
       <View style={styles.userBar}>
         <Text style={styles.userText}>x-user-id: {user?.id ?? "(未登録)"}</Text>
       </View>
@@ -107,7 +110,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
+    flexWrap: "wrap",
+    paddingHorizontal: 4,
   },
-  tabLabel: { color: "#AAB4D4", fontSize: 10 },
+  tabLabel: { color: "#AAB4D4", fontSize: 10, marginHorizontal: 2 },
   active: { color: "#5BA7FF", fontWeight: "700" },
 });
