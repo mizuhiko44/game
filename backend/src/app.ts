@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import cors from "cors";
 import express from "express";
 import router from "./routes";
@@ -6,12 +7,7 @@ import { errorMiddleware } from "./middlewares/error";
 export const app = express();
 
 const routeSummary = {
-  public: [
-    "GET /",
-    "GET /health",
-    "GET /api",
-    "POST /api/users/onboarding",
-  ],
+  public: ["GET /", "GET /health", "GET /api", "POST /api/users/onboarding"],
   protected: [
     "GET /api/home",
     "GET /api/events",
@@ -33,6 +29,16 @@ const routeSummary = {
 
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  const requestId = req.header("x-request-id") ?? randomUUID();
+  const startAt = process.hrtime.bigint();
+  res.setHeader("x-request-id", requestId);
+  res.on("finish", () => {
+    const elapsedMs = Number(process.hrtime.bigint() - startAt) / 1_000_000;
+    console.log(`${req.method} ${req.originalUrl} -> ${res.statusCode} [${elapsedMs.toFixed(1)}ms] rid=${requestId}`);
+  });
+  next();
+});
 
 app.get("/", (_req, res) =>
   res.json({

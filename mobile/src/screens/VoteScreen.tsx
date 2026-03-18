@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput } from "react-native";
 import { ScreenTemplate } from "../components/ScreenTemplate";
 import { apiRequest } from "../lib/api";
-import { EventItem } from "../lib/types";
+import { EventItem, VoteCreateResponse } from "../lib/types";
 
-export function VoteScreen({ userId }: { userId?: string }) {
+export function VoteScreen({ userId, onComplete }: { userId?: string; onComplete?: (vote: VoteCreateResponse) => void }) {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [eventId, setEventId] = useState("evt_global_1");
   const [optionId, setOptionId] = useState("opt_global_1");
@@ -13,18 +13,19 @@ export function VoteScreen({ userId }: { userId?: string }) {
 
   useEffect(() => {
     if (!userId) return;
-    apiRequest<EventItem[]>("/api/events?status=open", { userId }).then(setEvents).catch(() => {});
+    apiRequest<EventItem[]>("/events?status=open", { userId }).then(setEvents).catch(() => {});
   }, [userId]);
 
   const submit = async () => {
     if (!userId) return;
     try {
-      const vote = await apiRequest<{ id: string; actualConsumedPoints: number }>("/api/votes", {
+      const vote = await apiRequest<VoteCreateResponse>("/votes", {
         method: "POST",
         userId,
         body: { eventId, optionId, betPoints: Number(betPoints) },
       });
       setMessage(`投票完了: ${vote.id} / 消費 ${vote.actualConsumedPoints}pt`);
+      onComplete?.(vote);
     } catch (e) {
       setMessage((e as Error).message);
     }

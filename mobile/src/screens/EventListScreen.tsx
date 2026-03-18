@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { Text } from "react-native";
+import { Pressable, Text } from "react-native";
 import { ScreenTemplate } from "../components/ScreenTemplate";
 import { apiRequest } from "../lib/api";
 import { EventItem } from "../lib/types";
 
-export function EventListScreen({ userId }: { userId?: string }) {
+export function EventListScreen({ userId, onSelectEvent }: { userId?: string; onSelectEvent?: (eventId: string) => void }) {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!userId) return;
-    apiRequest<EventItem[]>("/api/events?status=open", { userId })
+    apiRequest<EventItem[]>("/events?status=open", { userId })
       .then(setEvents)
       .catch((e) => setError((e as Error).message));
   }, [userId]);
@@ -20,9 +20,11 @@ export function EventListScreen({ userId }: { userId?: string }) {
       {!userId && <Text style={{ color: "#AAB4D4" }}>x-user-id が必要です。</Text>}
       {!!error && <Text style={{ color: "#ff8f8f" }}>{error}</Text>}
       {events.map((event) => (
-        <Text key={event.id} style={{ color: "#F4F7FF" }}>
-          [{event.eventType}] {event.title} / min:{event.minBetPoints}
-        </Text>
+        <Pressable key={event.id} onPress={() => onSelectEvent?.(event.id)} style={{ paddingVertical: 6 }}>
+          <Text style={{ color: "#F4F7FF" }}>
+            [{event.eventType}] {event.title} / min:{event.minBetPoints}
+          </Text>
+        </Pressable>
       ))}
     </ScreenTemplate>
   );

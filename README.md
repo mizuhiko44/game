@@ -1,4 +1,3 @@
-# game
 # prediction-voting-game-mvp
 
 MVP構成:

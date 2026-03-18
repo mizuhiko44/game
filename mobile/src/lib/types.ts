@@ -8,20 +8,40 @@ export type User = {
 export type EventItem = {
   id: string;
   title: string;
+  description?: string;
   eventType: "global" | "local";
   status: string;
   voteEndAt: string;
+  resultAt?: string;
   minBetPoints: number;
-  options?: Array<{ id: string; label: string }>;
+  options?: Array<{ id: string; label: string; sortOrder?: number }>;
+};
+
+export type EventDetailPayload = EventItem & {
+  alreadyVoted: boolean;
+  popularity: Array<{ optionId: string; _count: number }>;
 };
 
 export type VoteHistoryItem = {
   id: string;
+  eventId: string;
+  optionId: string;
   inputBetPoints: number;
+  actualConsumedPoints?: number;
   status: string;
   rewardPoints: number;
+  createdAt?: string;
   event: { title: string };
   option: { label: string };
+};
+
+export type VoteCreateResponse = {
+  id: string;
+  eventId: string;
+  optionId: string;
+  inputBetPoints: number;
+  actualConsumedPoints: number;
+  status: string;
 };
 
 export type AvatarPayload = {

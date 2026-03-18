@@ -8,14 +8,32 @@ import { AvatarScreen } from "./src/screens/AvatarScreen";
 import { MyPageScreen } from "./src/screens/MyPageScreen";
 import { VoteScreen } from "./src/screens/VoteScreen";
 import { ResultListScreen } from "./src/screens/ResultListScreen";
-import { User } from "./src/lib/types";
+import { EventDetailScreen } from "./src/screens/EventDetailScreen";
+import { ResultDetailScreen } from "./src/screens/ResultDetailScreen";
+import { VoteCompleteScreen } from "./src/screens/VoteCompleteScreen";
+import { User, VoteCreateResponse, VoteHistoryItem } from "./src/lib/types";
 
-const tabs = ["Onboarding", "Home", "Events", "Vote", "History", "Results", "Avatar", "MyPage"] as const;
+const tabs = [
+  "Onboarding",
+  "Home",
+  "Events",
+  "EventDetail",
+  "Vote",
+  "VoteComplete",
+  "History",
+  "Results",
+  "ResultDetail",
+  "Avatar",
+  "MyPage",
+] as const;
 type Tab = (typeof tabs)[number];
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("Onboarding");
   const [user, setUser] = useState<User | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
+  const [lastVote, setLastVote] = useState<VoteCreateResponse | undefined>();
+  const [selectedResult, setSelectedResult] = useState<VoteHistoryItem | undefined>();
 
   return (
     <View style={{ flex: 1 }}>
@@ -28,10 +46,37 @@ export default function App() {
         />
       )}
       {tab === "Home" && <HomeScreen userId={user?.id} />}
-      {tab === "Events" && <EventListScreen userId={user?.id} />}
-      {tab === "Vote" && <VoteScreen userId={user?.id} />}
+      {tab === "Events" && (
+        <EventListScreen
+          userId={user?.id}
+          onSelectEvent={(eventId) => {
+            setSelectedEventId(eventId);
+            setTab("EventDetail");
+          }}
+        />
+      )}
+      {tab === "EventDetail" && <EventDetailScreen userId={user?.id} eventId={selectedEventId} />}
+      {tab === "Vote" && (
+        <VoteScreen
+          userId={user?.id}
+          onComplete={(vote) => {
+            setLastVote(vote);
+            setTab("VoteComplete");
+          }}
+        />
+      )}
+      {tab === "VoteComplete" && <VoteCompleteScreen vote={lastVote} />}
       {tab === "History" && <VoteHistoryScreen userId={user?.id} />}
-      {tab === "Results" && <ResultListScreen userId={user?.id} />}
+      {tab === "Results" && (
+        <ResultListScreen
+          userId={user?.id}
+          onSelectResult={(row) => {
+            setSelectedResult(row);
+            setTab("ResultDetail");
+          }}
+        />
+      )}
+      {tab === "ResultDetail" && <ResultDetailScreen result={selectedResult} />}
       {tab === "Avatar" && <AvatarScreen userId={user?.id} />}
       {tab === "MyPage" && <MyPageScreen userId={user?.id} />}
       <View style={styles.userBar}>
@@ -63,6 +108,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
   },
-  tabLabel: { color: "#AAB4D4", fontSize: 12 },
+  tabLabel: { color: "#AAB4D4", fontSize: 10 },
   active: { color: "#5BA7FF", fontWeight: "700" },
 });
