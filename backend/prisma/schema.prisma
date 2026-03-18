@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventType {
+  global
+  local
+}
+
+enum EventCategory {
+  sports
+  economy
+  entertainment
+  local
+}
+
+enum EventStatus {
+  scheduled
+  open
+  closed
+  settled
+}
+
+enum VoteStatus {
+  pending
+  won
+  lost
+}
+
+enum PointTransactionType {
+  initial
+  bet
+  reward
+  admin_adjustment
+}
+
+enum ItemType {
+  avatar_exp_material
+}
+
+enum AvatarEffectType {
+  bet_cost_discount
+}
+
+model User {
+  id             String             @id @default(cuid())
+  nickname       String
+  regionCode     String
+  totalPoints    Int                @default(0)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  avatar         Avatar?
+  votes          Vote[]
+  userItems      UserItem[]
+  transactions   PointTransaction[]
+
+  @@index([regionCode])
+}
+
+model Avatar {
+  id             String                @id @default(cuid())
+  userId         String                @unique
+  avatarType     String
+  level          Int                   @default(1)
+  exp            Int                   @default(0)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passiveEffects AvatarPassiveEffect[]
+}
+
+model AvatarPassiveEffect {
+  id          String           @id @default(cuid())
+  avatarId    String
+  effectType  AvatarEffectType
+  effectValue Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  avatar      Avatar           @relation(fields: [avatarId], references: [id], onDelete: Cascade)
+
+  @@unique([avatarId, effectType])
+}
+
+model ItemMaster {
+  id          String    @id @default(cuid())
+  name        String
+  itemType    ItemType
+  expValue    Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userItems   UserItem[]
+  rewardEvents Event[]  @relation("RewardItem")
+}
+
+model UserItem {
+  id         String     @id @default(cuid())
+  userId     String
+  itemId     String
+  quantity   Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item       ItemMaster @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, itemId])
+}
+
+model Event {
+  id                 String        @id @default(cuid())
+  eventType          EventType
+  regionCode         String?
+  category           EventCategory
+  title              String
+  description        String
+  status             EventStatus   @default(scheduled)
+  startAt            DateTime
+  voteEndAt          DateTime
+  resultAt           DateTime
+  minBetPoints       Int
+  rewardItemId       String?
+  rewardItemQuantity Int           @default(0)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  rewardItem         ItemMaster?   @relation("RewardItem", fields: [rewardItemId], references: [id], onDelete: SetNull)
+  options            EventOption[]
+  votes              Vote[]
+  relatedTransactions PointTransaction[] @relation("RelatedEvent")
+  result             EventResult?
+
+  @@index([eventType, status])
+  @@index([status, voteEndAt])
+  @@index([regionCode])
+  @@index([voteEndAt])
+}
+
+model EventOption {
+  id        String   @id @default(cuid())
+  eventId   String
+  label     String
+  sortOrder Int
+  event               Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  votes               Vote[]
+  wonInEventResults   EventResult[]  @relation("WinningOption")
+
+  @@unique([eventId, label])
+  @@unique([eventId, id])
+  @@unique([eventId, sortOrder])
+}
+
+model Vote {
+  id                   String   @id @default(cuid())
+  userId               String
+  eventId              String
+  optionId             String
+  inputBetPoints       Int
+  actualConsumedPoints Int
+  status               VoteStatus @default(pending)
+  rewardPoints         Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event                Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  option               EventOption @relation(fields: [eventId, optionId], references: [eventId, id], onDelete: Restrict)
+  transactions         PointTransaction[]
+
+  @@unique([userId, eventId])
+  @@index([userId, createdAt])
+  @@index([eventId, status])
+}
+
+model EventResult {
+  id              String   @id @default(cuid())
+  eventId          String   @unique
+  winningOptionId  String
+  settledAt        DateTime
+  event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  winningOption    EventOption @relation("WinningOption", fields: [winningOptionId], references: [id], onDelete: Restrict)
+}
+
+model PointTransaction {
+  id               String               @id @default(cuid())
+  userId           String
+  transactionType  PointTransactionType
+  amount           Int
+  balanceAfter     Int
+  relatedEventId   String?
+  relatedVoteId    String?
+  createdAt        DateTime             @default(now())
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relatedEvent     Event?               @relation("RelatedEvent", fields: [relatedEventId], references: [id], onDelete: SetNull)
+  relatedVote      Vote?                @relation(fields: [relatedVoteId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([relatedEventId])
+  @@index([relatedVoteId])
+}
