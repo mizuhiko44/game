@@ -20,7 +20,13 @@ export async function refreshAuthToken(req: Request, res: Response) {
 
 export async function logout(req: Request, res: Response) {
   const parsed = refreshSchema.parse(req.body);
-  await revokeRefreshToken(parsed.refreshToken);
+
+  try {
+    await revokeRefreshToken(parsed.refreshToken);
+  } catch (error) {
+    throw new HttpError(401, error instanceof Error ? error.message : "refresh token is invalid or expired");
+  }
+
   return res.status(204).send();
 }
 

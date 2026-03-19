@@ -34,6 +34,7 @@ MVP構成:
 - `backend/.env.staging.example` と `mobile/.env.staging.example` を追加し、staging 用の設定雛形を用意しました。
 - mobile は `EXPO_PUBLIC_APP_ENV`, `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_AUTH_MODE` を使って接続先と認証モードを切り替えられます。
 - `AUTH_MODE` は `mvp_header`, `jwt_transition`, `jwt_required` の3段階を想定しています。
+- `jwt_transition` / `jwt_required` では refresh token のハッシュを `AuthSession` に保存し、`/api/auth/refresh` と `/api/auth/logout` で失効管理します。
 - 詳細は `docs/staging-env-auth-plan.md` と `docs/auth-jwt-spec.md` を参照してください。
 
 ## Local development setup

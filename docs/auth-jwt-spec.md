@@ -15,9 +15,10 @@
 - 想定TTL: 60分
 
 ### Refresh Token
-- 形式: ランダム文字列またはJWT
+- 形式: JWT
 - 利用箇所: access token 再発行
 - 想定TTL: 30日
+- 現行実装では `AuthSession` に refresh token の SHA-256 ハッシュを保存し、`/api/auth/refresh` と `/api/auth/logout` で失効管理を行う
 
 ## 4. JWT Claims
 - `sub`: user id
@@ -29,7 +30,7 @@
 - `exp`
 
 ## 5. API方針
-### 追加予定API
+### 実装済みAPI
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
@@ -58,3 +59,9 @@ Authorization: Bearer <access_token>
 2. mobile/web クライアント切替
 3. Admin 認証切替
 4. `jwt_required` へ移行
+
+## 10. 現在の実装メモ
+- access token は署名付きJWTとして生成し、API認可に使用する
+- refresh token も署名付きJWTとして生成するが、DBには平文を保存せずハッシュのみ保持する
+- refresh 実行時は既存 session を revoke したうえで新しい refresh token を再発行する
+- logout は該当 refresh session を revoke することで再利用を防ぐ

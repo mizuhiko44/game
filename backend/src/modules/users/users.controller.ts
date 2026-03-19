@@ -50,7 +50,7 @@ export async function onboarding(req: Request, res: Response) {
       },
     });
 
-    return issueAuthTokensForUser(created);
+    return issueAuthTokensForUser(created, tx);
   });
 
   return res.status(201).json(payload);
