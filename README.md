@@ -6,6 +6,7 @@ MVP構成:
 - `docs/mvp-design.md`: 設計仕様書
 - `docs/mobile-rollout-plan.md`: スマホ展開構想
 - `docs/web-mobile-foundation-plan.md`: Web / スマホ両対応の土台構想
+- `docs/staging-env-auth-plan.md`: staging + env分離 + 認証設計 実施計画
 - `docker-compose.yml`: ローカル PostgreSQL
 
 ## API base / 認証
@@ -25,6 +26,12 @@ MVP構成:
   - Web開発の既定値: `http://localhost:3000`
   - 実機/別端末テスト: `EXPO_PUBLIC_API_BASE_URL` を `http://<PCのLAN-IP>:3000` に設定
   - 例: `EXPO_PUBLIC_API_BASE_URL=http://192.168.1.10:3000 npm run start`
+
+## Environment separation / auth groundwork
+- backend は `APP_ENV`, `PUBLIC_APP_URL`, `CORS_ORIGINS`, `AUTH_MODE`, `JWT_*` を使って local / staging / production を分離できる前提にしました。
+- mobile は `EXPO_PUBLIC_APP_ENV`, `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_AUTH_MODE` を使って接続先と認証モードを切り替えられます。
+- `AUTH_MODE` は `mvp_header`, `jwt_transition`, `jwt_required` の3段階を想定しています。
+- 詳細は `docs/staging-env-auth-plan.md` を参照してください。
 
 ## Local development setup
 

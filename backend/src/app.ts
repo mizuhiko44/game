@@ -4,11 +4,13 @@ import express from "express";
 import router from "./routes";
 import { errorMiddleware } from "./middlewares/error";
 import { logger } from "./lib/logger";
+import { env } from "./config/env";
 
 export const app = express();
 
 const routeSummary = {
-  public: ["GET /", "GET /health", "GET /api", "POST /api/users/onboarding", "POST /api/users/login"],
+  appEnv: env.appEnv,
+  public: ["GET /", "GET /health", "GET /api", "GET /api/config", "POST /api/users/onboarding", "POST /api/users/login"],
   protected: [
     "GET /api/home",
     "GET /api/events",
@@ -25,13 +27,19 @@ const routeSummary = {
     "POST /api/admin/events/settle",
   ],
   auth: {
-    type: "header",
-    headerName: "x-user-id",
-    note: "All protected routes require x-user-id header in MVP.",
+    mode: env.authMode,
+    current: "x-user-id header (MVP)",
+    next: "Bearer token / JWT",
+    issuer: env.jwtIssuer,
+    audience: env.jwtAudience,
   },
 };
 
-app.use(cors());
+app.use(
+  cors({
+    origin: env.corsOrigins.includes("*") ? true : env.corsOrigins,
+  })
+);
 app.use(express.json());
 app.use((req, res, next) => {
   const requestId = req.header("x-request-id") ?? randomUUID();
@@ -49,11 +57,27 @@ app.get("/", (_req, res) =>
     name: "prediction-voting-game-mvp-api",
     docs: "/api",
     health: "/health",
+    appEnv: env.appEnv,
   })
 );
 
-app.get("/health", (_req, res) => res.json({ ok: true }));
+app.get("/health", (_req, res) => res.json({ ok: true, appEnv: env.appEnv }));
 app.get("/api", (_req, res) => res.json(routeSummary));
+app.get("/api/config", (_req, res) =>
+  res.json({
+    appEnv: env.appEnv,
+    authMode: env.authMode,
+    publicAppUrl: env.publicAppUrl,
+    auth: {
+      current: "x-user-id",
+      next: "bearer-jwt",
+      issuer: env.jwtIssuer,
+      audience: env.jwtAudience,
+      accessTokenTtlMinutes: env.accessTokenTtlMinutes,
+      refreshTokenTtlDays: env.refreshTokenTtlDays,
+    },
+  })
+);
 
 app.use("/api", router);
 app.use(errorMiddleware);

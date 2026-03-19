@@ -9,9 +9,11 @@ type AppShellProps = PropsWithChildren<{
   nickname?: string;
   userId?: string;
   onLogout?: () => void | Promise<void>;
+  appEnv?: string;
+  authMode?: string;
 }>;
 
-export function AppShell({ tab, onTabChange, nickname, userId, onLogout, children }: AppShellProps) {
+export function AppShell({ tab, onTabChange, nickname, userId, onLogout, appEnv, authMode, children }: AppShellProps) {
   const { width } = useWindowDimensions();
   const wide = isWideLayout(width);
 
@@ -21,6 +23,7 @@ export function AppShell({ tab, onTabChange, nickname, userId, onLogout, childre
         <View style={styles.sidebar}>
           <Text style={styles.brandTitle}>Prediction Game</Text>
           <Text style={styles.platformBadge}>{resolvePlatformLabel()} foundation</Text>
+          <Text style={styles.metaText}>env: {appEnv ?? "local"} / auth: {authMode ?? "mvp_header"}</Text>
           <View style={styles.profileCard}>
             <Text style={styles.profileText}>nickname: {nickname ?? "(未登録)"}</Text>
             <Text style={styles.profileText}>x-user-id: {userId ?? "(未登録)"}</Text>
@@ -54,7 +57,7 @@ export function AppShell({ tab, onTabChange, nickname, userId, onLogout, childre
   return (
     <View style={styles.mobileRoot}>
       <View style={styles.userBar}>
-        <Text style={styles.userText}>nickname: {nickname ?? "(未登録)"} / x-user-id: {userId ?? "(未登録)"}</Text>
+        <Text style={styles.userText}>env: {appEnv ?? "local"} / auth: {authMode ?? "mvp_header"} / nickname: {nickname ?? "(未登録)"} / x-user-id: {userId ?? "(未登録)"}</Text>
         {!!userId && (
           <Pressable onPress={onLogout}>
             <Text style={styles.logoutText}>ログアウト</Text>
@@ -78,6 +81,7 @@ const styles = StyleSheet.create({
   sidebar: { width: 280, backgroundColor: "#121A30", paddingHorizontal: 16, paddingTop: 28, paddingBottom: 20, gap: 16 },
   brandTitle: { color: "#F4F7FF", fontSize: 24, fontWeight: "700" },
   platformBadge: { color: "#5BA7FF", fontSize: 12, fontWeight: "700" },
+  metaText: { color: "#7F8DB6", fontSize: 12 },
   profileCard: { backgroundColor: "#141D34", borderRadius: 12, padding: 12, gap: 6 },
   profileText: { color: "#AAB4D4", fontSize: 12 },
   logoutButton: { marginTop: 6, backgroundColor: "#5BA7FF", borderRadius: 999, paddingVertical: 10, alignItems: "center" },

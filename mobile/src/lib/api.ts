@@ -1,21 +1,5 @@
-const DEFAULT_API_BASE_URL = "http://localhost:3000";
+import { API_BASE_URL } from "./env";
 
-function resolveApiBaseUrl() {
-  const configured = process.env.EXPO_PUBLIC_API_BASE_URL;
-  if (configured) return configured;
-
-  if (typeof globalThis !== "undefined" && "location" in globalThis) {
-    const location = (globalThis as { location?: { origin?: string; hostname?: string } }).location;
-    if (location?.origin) {
-      const isLocalHost = ["localhost", "127.0.0.1"].includes(location.hostname ?? "");
-      return isLocalHost ? DEFAULT_API_BASE_URL : location.origin;
-    }
-  }
-
-  return DEFAULT_API_BASE_URL;
-}
-
-export const API_BASE_URL = resolveApiBaseUrl();
 
 type ApiOptions = {
   method?: "GET" | "POST";

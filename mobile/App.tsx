@@ -13,10 +13,11 @@ import { ResultDetailScreen } from "./src/screens/ResultDetailScreen";
 import { VoteCompleteScreen } from "./src/screens/VoteCompleteScreen";
 import { AdminScreen } from "./src/screens/AdminScreen";
 import { apiRequest } from "./src/lib/api";
-import { clearSavedNickname, getSavedNickname } from "./src/lib/session";
+import { clearAuthSession, clearSavedNickname, getSavedNickname } from "./src/lib/session";
 import { User, VoteCreateResponse, VoteHistoryItem } from "./src/lib/types";
 import { Tab } from "./src/lib/navigation";
 import { AppShell } from "./src/components/AppShell";
+import { APP_ENV, AUTH_MODE } from "./src/lib/env";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("Onboarding");
@@ -39,6 +40,7 @@ export default function App() {
         setTab("Home");
       } catch {
         await clearSavedNickname();
+        await clearAuthSession();
       } finally {
         setBooting(false);
       }
@@ -49,6 +51,7 @@ export default function App() {
 
   const logout = async () => {
     await clearSavedNickname();
+    await clearAuthSession();
     setUser(null);
     setSelectedEventId(undefined);
     setSelectedResult(undefined);
@@ -120,7 +123,7 @@ export default function App() {
   }
 
   return (
-    <AppShell tab={tab} onTabChange={setTab} nickname={user?.nickname} userId={user?.id} onLogout={logout}>
+    <AppShell tab={tab} onTabChange={setTab} nickname={user?.nickname} userId={user?.id} onLogout={logout} appEnv={APP_ENV} authMode={AUTH_MODE}>
       {renderCurrentScreen()}
     </AppShell>
   );
