@@ -47,10 +47,16 @@ enum AvatarEffectType {
   bet_cost_discount
 }
 
+enum UserRole {
+  user
+  admin
+}
+
 model User {
   id             String             @id @default(cuid())
   nickname       String
   regionCode     String
+  role           UserRole           @default(user)
   totalPoints    Int                @default(0)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
@@ -58,8 +64,23 @@ model User {
   votes          Vote[]
   userItems      UserItem[]
   transactions   PointTransaction[]
+  authSessions   AuthSession[]
 
   @@index([regionCode])
+  @@index([role])
+}
+
+model AuthSession {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model Avatar {
@@ -87,14 +108,14 @@ model AvatarPassiveEffect {
 }
 
 model ItemMaster {
-  id          String    @id @default(cuid())
-  name        String
-  itemType    ItemType
-  expValue    Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  userItems   UserItem[]
-  rewardEvents Event[]  @relation("RewardItem")
+  id           String    @id @default(cuid())
+  name         String
+  itemType     ItemType
+  expValue     Int
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  userItems    UserItem[]
+  rewardEvents Event[]   @relation("RewardItem")
 }
 
 model UserItem {
@@ -111,25 +132,25 @@ model UserItem {
 }
 
 model Event {
-  id                 String        @id @default(cuid())
+  id                 String               @id @default(cuid())
   eventType          EventType
   regionCode         String?
   category           EventCategory
   title              String
   description        String
-  status             EventStatus   @default(scheduled)
+  status             EventStatus          @default(scheduled)
   startAt            DateTime
   voteEndAt          DateTime
   resultAt           DateTime
   minBetPoints       Int
   rewardItemId       String?
-  rewardItemQuantity Int           @default(0)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  rewardItem         ItemMaster?   @relation("RewardItem", fields: [rewardItemId], references: [id], onDelete: SetNull)
+  rewardItemQuantity Int                  @default(0)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  rewardItem         ItemMaster?          @relation("RewardItem", fields: [rewardItemId], references: [id], onDelete: SetNull)
   options            EventOption[]
   votes              Vote[]
-  relatedTransactions PointTransaction[] @relation("RelatedEvent")
+  relatedTransactions PointTransaction[]  @relation("RelatedEvent")
   result             EventResult?
 
   @@index([eventType, status])
@@ -139,13 +160,13 @@ model Event {
 }
 
 model EventOption {
-  id        String   @id @default(cuid())
-  eventId   String
-  label     String
-  sortOrder Int
-  event               Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  votes               Vote[]
-  wonInEventResults   EventResult[]  @relation("WinningOption")
+  id                 String          @id @default(cuid())
+  eventId            String
+  label              String
+  sortOrder          Int
+  event              Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  votes              Vote[]
+  wonInEventResults  EventResult[]   @relation("WinningOption")
 
   @@unique([eventId, label])
   @@unique([eventId, id])
@@ -153,19 +174,19 @@ model EventOption {
 }
 
 model Vote {
-  id                   String   @id @default(cuid())
+  id                   String        @id @default(cuid())
   userId               String
   eventId              String
   optionId             String
   inputBetPoints       Int
   actualConsumedPoints Int
-  status               VoteStatus @default(pending)
-  rewardPoints         Int      @default(0)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event                Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  option               EventOption @relation(fields: [eventId, optionId], references: [eventId, id], onDelete: Restrict)
+  status               VoteStatus    @default(pending)
+  rewardPoints         Int           @default(0)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event                Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  option               EventOption   @relation(fields: [eventId, optionId], references: [eventId, id], onDelete: Restrict)
   transactions         PointTransaction[]
 
   @@unique([userId, eventId])
@@ -174,12 +195,12 @@ model Vote {
 }
 
 model EventResult {
-  id              String   @id @default(cuid())
-  eventId          String   @unique
-  winningOptionId  String
-  settledAt        DateTime
-  event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  winningOption    EventOption @relation("WinningOption", fields: [winningOptionId], references: [id], onDelete: Restrict)
+  id              String      @id @default(cuid())
+  eventId         String      @unique
+  winningOptionId String
+  settledAt       DateTime
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  winningOption   EventOption @relation("WinningOption", fields: [winningOptionId], references: [id], onDelete: Restrict)
 }
 
 model PointTransaction {

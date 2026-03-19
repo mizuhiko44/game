@@ -1,11 +1,23 @@
 import { useState } from "react";
 import { Pressable, Text, TextInput } from "react-native";
 import { ScreenTemplate } from "../components/ScreenTemplate";
-import { apiRequest, ApiError } from "../lib/api";
-import { saveNickname } from "../lib/session";
-import { User } from "../lib/types";
+import { ApiError, apiRequest } from "../lib/api";
+import { saveAuthSession, saveNickname } from "../lib/session";
+import { AuthSessionResponse, User } from "../lib/types";
 
 const INPUT_STYLE = { color: "white", borderWidth: 1, borderColor: "#2B3554", padding: 10, borderRadius: 8 } as const;
+
+function persistAuth(response: AuthSessionResponse) {
+  return saveAuthSession({
+    accessToken: response.auth.accessToken,
+    refreshToken: response.auth.refreshToken,
+    userId: response.user.id,
+    nickname: response.user.nickname,
+    role: response.user.role,
+    expiresAt: response.auth.expiresAt,
+    refreshExpiresAt: response.auth.refreshExpiresAt,
+  });
+}
 
 export function OnboardingScreen({ onDone }: { onDone: (user: User) => void }) {
   const [nickname, setNickname] = useState("Tetsu");
@@ -21,21 +33,23 @@ export function OnboardingScreen({ onDone }: { onDone: (user: User) => void }) {
       setMessage("");
 
       if (!needsRegistration) {
-        const user = await apiRequest<User>("/api/users/login", {
+        const payload = await apiRequest<AuthSessionResponse>("/api/users/login", {
           method: "POST",
           body: { nickname },
         });
-        await saveNickname(user.nickname);
-        onDone(user);
+        await saveNickname(payload.user.nickname);
+        await persistAuth(payload);
+        onDone(payload.user);
         return;
       }
 
-      const user = await apiRequest<User>("/api/users/onboarding", {
+      const payload = await apiRequest<AuthSessionResponse>("/api/users/onboarding", {
         method: "POST",
         body: { nickname, regionCode, avatarType },
       });
-      await saveNickname(user.nickname);
-      onDone(user);
+      await saveNickname(payload.user.nickname);
+      await persistAuth(payload);
+      onDone(payload.user);
     } catch (e) {
       const apiError = e as ApiError;
       if (apiError.status === 404 && !needsRegistration) {

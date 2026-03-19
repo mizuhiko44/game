@@ -1,6 +1,6 @@
-import { reportClientError } from "./monitoring";
 import { API_BASE_URL } from "./env";
-
+import { reportClientError } from "./monitoring";
+import { getAuthSession } from "./session";
 
 type ApiOptions = {
   method?: "GET" | "POST";
@@ -40,6 +40,11 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (options.userId) {
     headers["x-user-id"] = options.userId;
+  }
+
+  const authSession = await getAuthSession();
+  if (authSession?.accessToken) {
+    headers.authorization = `Bearer ${authSession.accessToken}`;
   }
 
   let response: Response;

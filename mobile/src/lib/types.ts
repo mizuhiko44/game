@@ -1,8 +1,25 @@
+export type UserRole = "user" | "admin";
+
 export type User = {
   id: string;
   nickname: string;
   regionCode: string;
   totalPoints: number;
+  role: UserRole;
+};
+
+export type AuthPayload = {
+  tokenType: "Bearer";
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  refreshExpiresAt: string;
+  authMode: string;
+};
+
+export type AuthSessionResponse = {
+  user: User;
+  auth: AuthPayload;
 };
 
 export type AdminRegisteredUser = User & {
@@ -116,9 +133,11 @@ export type AvatarPayload = {
 };
 
 export type MyPagePayload = {
+  id: string;
   nickname: string;
   regionCode: string;
   totalPoints: number;
+  role: UserRole;
   totalVotes: number;
   hitRate: number;
   avatarLevel: number;

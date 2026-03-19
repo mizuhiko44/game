@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod";
+import { issueAuthTokensForUser, serializeUser } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { HttpError } from "../../middlewares/error";
 
@@ -23,12 +24,13 @@ export async function onboarding(req: Request, res: Response) {
   const duplicateExists = existingUsers.some((user) => user.nickname.trim().toLowerCase() === normalizedNickname);
   if (duplicateExists) throw new HttpError(409, "nickname already exists");
 
-  const user = await prisma.$transaction(async (tx) => {
+  const payload = await prisma.$transaction(async (tx) => {
     const created = await tx.user.create({
       data: {
         nickname: parsed.nickname,
         regionCode: parsed.regionCode,
         totalPoints: 1000,
+        role: "user",
       },
     });
 
@@ -49,10 +51,10 @@ export async function onboarding(req: Request, res: Response) {
       },
     });
 
-    return created;
+    return issueAuthTokensForUser(tx, created);
   });
 
-  return res.status(201).json(user);
+  return res.status(201).json(payload);
 }
 
 export async function login(req: Request, res: Response) {
@@ -63,7 +65,7 @@ export async function login(req: Request, res: Response) {
   const user = users.find((row) => row.nickname.trim().toLowerCase() === normalizedNickname);
   if (!user) throw new HttpError(404, "user not found");
 
-  return res.json(user);
+  return res.json(await issueAuthTokensForUser(prisma, user));
 }
 
 export async function listRegisteredUsers(_req: Request, res: Response) {
@@ -75,10 +77,7 @@ export async function listRegisteredUsers(_req: Request, res: Response) {
 
   return res.json(
     users.map((user) => ({
-      id: user.id,
-      nickname: user.nickname,
-      regionCode: user.regionCode,
-      totalPoints: user.totalPoints,
+      ...serializeUser(user),
       createdAt: user.createdAt,
       avatarType: user.avatar?.avatarType ?? null,
     }))

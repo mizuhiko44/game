@@ -13,7 +13,7 @@ MVP構成:
 
 ## API base / 認証
 - すべての業務APIは `/api` 配下です。
-- 保護されたルートは `x-user-id` ヘッダーが必須です（MVP簡易認証）。
+- 保護されたルートは `AUTH_MODE` に応じて `x-user-id` または `Authorization: Bearer <token>` を受け付けます。
 - 公開情報:
   - `GET /` : APIメタ情報
   - `GET /health` : ヘルスチェック
@@ -66,6 +66,10 @@ npm run dev
 - `backend/scripts/api-smoke-test.sh` を追加しました。
 - 前提: backend / DB が起動済みで、seed データ投入済みであること。
 - 例: `BASE_URL=http://localhost:4000 bash backend/scripts/api-smoke-test.sh`
+- script は JWT が返るログイン応答に追随しており、`Authorization` と `x-user-id` の両方を使って transition モードの疎通確認ができます。
+
+## Minimum CI
+- GitHub Actions (`.github/workflows/ci.yml`) で backend の `npm run ci` と mobile の `npm run ci` を実行します。
 
 ## Seeded sample data
 - Demo user id (`x-user-id`): `usr_demo_1`
@@ -115,7 +119,7 @@ curl http://localhost:3000/api/votes/history \
 
 ### Mobile Admin UI (MVP)
 - `Admin` タブから未確定イベントを選択し、正解選択肢を指定して結果確定できます。
-- 現在のMVPでは `x-user-id` ベースの簡易認証のため、管理者権限分離は未実装です（将来対応）。
+- Admin API は `role=admin` のみ利用可能です。seed 済みの `usr_demo_1` は admin として作成されます。
 - 結果確定後は `processedVoteCount`, `winnerCount`, `totalRewardPoints`, `rewardedItemUserCount` を確認できます。
 
 ### 5) Settle result (protected/admin endpoint in MVP)

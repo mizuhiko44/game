@@ -10,7 +10,7 @@ export const app = express();
 
 const routeSummary = {
   appEnv: env.appEnv,
-  public: ["GET /", "GET /health", "GET /api", "GET /api/config", "POST /api/users/onboarding", "POST /api/users/login"],
+  public: ["GET /", "GET /health", "GET /api", "GET /api/config", "POST /api/users/onboarding", "POST /api/users/login", "POST /api/auth/login", "POST /api/auth/refresh"],
   protected: [
     "GET /api/home",
     "GET /api/events",
@@ -28,7 +28,7 @@ const routeSummary = {
   ],
   auth: {
     mode: env.authMode,
-    current: "x-user-id header (MVP)",
+    current: env.authMode === "mvp_header" ? "x-user-id header" : "Bearer token / JWT",
     next: "Bearer token / JWT",
     issuer: env.jwtIssuer,
     audience: env.jwtAudience,
@@ -69,7 +69,7 @@ app.get("/api/config", (_req, res) =>
     authMode: env.authMode,
     publicAppUrl: env.publicAppUrl,
     auth: {
-      current: "x-user-id",
+      current: env.authMode === "mvp_header" ? "x-user-id" : "bearer-jwt",
       next: "bearer-jwt",
       issuer: env.jwtIssuer,
       audience: env.jwtAudience,

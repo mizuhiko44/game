@@ -19,6 +19,7 @@ export function MyPageScreen({ userId }: { userId?: string }) {
       {me ? (
         <View style={CARD_STYLE}>
           <Text style={{ color: "#F4F7FF" }}>nickname: {me.nickname}</Text>
+          <Text style={{ color: "#F4F7FF" }}>role: {me.role}</Text>
           <Text style={{ color: "#F4F7FF" }}>points: {me.totalPoints}</Text>
           <Text style={{ color: "#F4F7FF" }}>totalVotes: {me.totalVotes}</Text>
           <Text style={{ color: "#F4F7FF" }}>hitRate: {me.hitRate}</Text>

@@ -12,6 +12,7 @@ export function AppShell({ onLogout, children }: AppShellProps) {
   const { width } = useWindowDimensions();
   const wide = isWideLayout(width);
   const { tab, setTab, user, appEnv, authMode } = useAppState();
+  const visibleTabs = appTabs.filter((entry) => entry.key !== "Admin" || user?.role === "admin");
 
   if (wide) {
     return (
@@ -22,6 +23,7 @@ export function AppShell({ onLogout, children }: AppShellProps) {
           <Text style={styles.metaText}>env: {appEnv} / auth: {authMode}</Text>
           <View style={styles.profileCard}>
             <Text style={styles.profileText}>nickname: {user?.nickname ?? "(未登録)"}</Text>
+            <Text style={styles.profileText}>role: {user?.role ?? "guest"}</Text>
             <Text style={styles.profileText}>x-user-id: {user?.id ?? "(未登録)"}</Text>
             {!!user?.id && (
               <Pressable onPress={onLogout} style={styles.logoutButton}>
@@ -30,7 +32,7 @@ export function AppShell({ onLogout, children }: AppShellProps) {
             )}
           </View>
           <View style={styles.navGroup}>
-            {appTabs.map((entry) => {
+            {visibleTabs.map((entry) => {
               const active = entry.key === tab;
               return (
                 <Pressable key={entry.key} onPress={() => setTab(entry.key)} style={[styles.sidebarTab, active && styles.sidebarTabActive]}>
@@ -49,7 +51,7 @@ export function AppShell({ onLogout, children }: AppShellProps) {
   return (
     <View style={styles.mobileRoot}>
       <View style={styles.userBar}>
-        <Text style={styles.userText}>env: {appEnv} / auth: {authMode} / nickname: {user?.nickname ?? "(未登録)"} / x-user-id: {user?.id ?? "(未登録)"}</Text>
+        <Text style={styles.userText}>env: {appEnv} / auth: {authMode} / role: {user?.role ?? "guest"} / nickname: {user?.nickname ?? "(未登録)"} / x-user-id: {user?.id ?? "(未登録)"}</Text>
         {!!user?.id && (
           <Pressable onPress={onLogout}>
             <Text style={styles.logoutText}>ログアウト</Text>
@@ -58,7 +60,7 @@ export function AppShell({ onLogout, children }: AppShellProps) {
       </View>
       <View style={styles.mobileContent}>{children}</View>
       <View style={styles.tabBar}>
-        {appTabs.map((entry) => (
+        {visibleTabs.map((entry) => (
           <Pressable key={entry.key} onPress={() => setTab(entry.key)}>
             <Text style={[styles.tabLabel, tab === entry.key && styles.active]}>{entry.label}</Text>
           </Pressable>

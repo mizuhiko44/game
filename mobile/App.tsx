@@ -1,24 +1,37 @@
-import { View, Text, useWindowDimensions } from "react-native";
 import { useEffect, useState } from "react";
-import { OnboardingScreen } from "./src/screens/OnboardingScreen";
-import { HomeScreen } from "./src/screens/HomeScreen";
-import { EventListScreen } from "./src/screens/EventListScreen";
-import { VoteHistoryScreen } from "./src/screens/VoteHistoryScreen";
-import { AvatarScreen } from "./src/screens/AvatarScreen";
-import { MyPageScreen } from "./src/screens/MyPageScreen";
-import { VoteScreen } from "./src/screens/VoteScreen";
-import { ResultListScreen } from "./src/screens/ResultListScreen";
-import { EventDetailScreen } from "./src/screens/EventDetailScreen";
-import { ResultDetailScreen } from "./src/screens/ResultDetailScreen";
-import { VoteCompleteScreen } from "./src/screens/VoteCompleteScreen";
-import { AdminScreen } from "./src/screens/AdminScreen";
-import { apiRequest } from "./src/lib/api";
-import { clearAuthSession, clearSavedNickname, getSavedNickname } from "./src/lib/session";
-import { User } from "./src/lib/types";
+import { Text, View, useWindowDimensions } from "react-native";
 import { AppShell } from "./src/components/AppShell";
-import { AppStateProvider, useAppState } from "./src/state/AppState";
-import { getCurrentRouteState, subscribeRouteChanges, syncRouteState } from "./src/lib/router";
+import { ApiError, apiRequest } from "./src/lib/api";
+import { AUTH_MODE } from "./src/lib/env";
 import { reportClientError } from "./src/lib/monitoring";
+import { getCurrentRouteState, subscribeRouteChanges, syncRouteState } from "./src/lib/router";
+import { clearAuthSession, clearSavedNickname, getAuthSession, getSavedNickname, saveAuthSession } from "./src/lib/session";
+import { AdminScreen } from "./src/screens/AdminScreen";
+import { AvatarScreen } from "./src/screens/AvatarScreen";
+import { EventDetailScreen } from "./src/screens/EventDetailScreen";
+import { EventListScreen } from "./src/screens/EventListScreen";
+import { HomeScreen } from "./src/screens/HomeScreen";
+import { MyPageScreen } from "./src/screens/MyPageScreen";
+import { OnboardingScreen } from "./src/screens/OnboardingScreen";
+import { ResultDetailScreen } from "./src/screens/ResultDetailScreen";
+import { ResultListScreen } from "./src/screens/ResultListScreen";
+import { VoteCompleteScreen } from "./src/screens/VoteCompleteScreen";
+import { VoteHistoryScreen } from "./src/screens/VoteHistoryScreen";
+import { VoteScreen } from "./src/screens/VoteScreen";
+import { AppStateProvider, useAppState } from "./src/state/AppState";
+import { AuthSessionResponse, User } from "./src/lib/types";
+
+async function persistAuthPayload(payload: AuthSessionResponse) {
+  await saveAuthSession({
+    accessToken: payload.auth.accessToken,
+    refreshToken: payload.auth.refreshToken,
+    userId: payload.user.id,
+    nickname: payload.user.nickname,
+    role: payload.user.role,
+    expiresAt: payload.auth.expiresAt,
+    refreshExpiresAt: payload.auth.refreshExpiresAt,
+  });
+}
 
 function AppInner() {
   const [booting, setBooting] = useState(true);
@@ -43,18 +56,34 @@ function AppInner() {
   useEffect(() => {
     async function bootstrap() {
       try {
+        const savedSession = await getAuthSession();
+        if (AUTH_MODE !== "mvp_header" && savedSession?.refreshToken) {
+          const refreshed = await apiRequest<AuthSessionResponse>("/api/auth/refresh", {
+            method: "POST",
+            body: { refreshToken: savedSession.refreshToken },
+          });
+          await persistAuthPayload(refreshed);
+          setUser(refreshed.user);
+          if (getCurrentRouteState().tab === "Onboarding") setTab("Home");
+          return;
+        }
+
         const savedNickname = await getSavedNickname();
         if (!savedNickname) return;
-        const rememberedUser = await apiRequest<User>("/api/users/login", {
+        const rememberedUser = await apiRequest<AuthSessionResponse>("/api/users/login", {
           method: "POST",
           body: { nickname: savedNickname },
         });
-        setUser(rememberedUser);
-        if (tab === "Onboarding") setTab("Home");
+        await persistAuthPayload(rememberedUser);
+        setUser(rememberedUser.user);
+        if (getCurrentRouteState().tab === "Onboarding") setTab("Home");
       } catch (error) {
+        const apiError = error as ApiError;
         reportClientError(error, { phase: "bootstrap" });
-        await clearSavedNickname();
-        await clearAuthSession();
+        if (AUTH_MODE !== "mvp_header" && [401, 404].includes(apiError.status ?? 0)) {
+          await clearSavedNickname();
+          await clearAuthSession();
+        }
       } finally {
         setBooting(false);
       }
@@ -66,21 +95,39 @@ function AppInner() {
     });
   }, []);
 
+  useEffect(() => {
+    if (tab === "Admin" && user?.role !== "admin") {
+      setTab(user ? "Home" : "Onboarding");
+    }
+  }, [tab, user, setTab]);
+
   const logout = async () => {
-    await clearSavedNickname();
-    await clearAuthSession();
-    setUser(null);
-    setSelectedEventId(undefined);
-    setSelectedResult(undefined);
-    setLastVote(undefined);
-    setTab("Onboarding");
+    try {
+      const session = await getAuthSession();
+      if (session?.refreshToken && AUTH_MODE !== "mvp_header") {
+        await apiRequest<void>("/api/auth/logout", {
+          method: "POST",
+          body: { refreshToken: session.refreshToken },
+        });
+      }
+    } catch (error) {
+      reportClientError(error, { phase: "logout" });
+    } finally {
+      await clearSavedNickname();
+      await clearAuthSession();
+      setUser(null);
+      setSelectedEventId(undefined);
+      setSelectedResult(undefined);
+      setLastVote(undefined);
+      setTab("Onboarding");
+    }
   };
 
   const renderCurrentScreen = () => {
     if (tab === "Onboarding") {
       return (
         <OnboardingScreen
-          onDone={(nextUser) => {
+          onDone={(nextUser: User) => {
             setUser(nextUser);
             setTab("Home");
           }}
@@ -127,7 +174,7 @@ function AppInner() {
     if (tab === "ResultDetail") return <ResultDetailScreen result={selectedResult} />;
     if (tab === "Avatar") return <AvatarScreen userId={user?.id} />;
     if (tab === "MyPage") return <MyPageScreen userId={user?.id} />;
-    if (tab === "Admin") return <AdminScreen userId={user?.id} isWideLayout={width >= 960} />;
+    if (tab === "Admin") return user?.role === "admin" ? <AdminScreen userId={user.id} isWideLayout={width >= 960} /> : <HomeScreen userId={user?.id} />;
     return <HomeScreen userId={user?.id} />;
   };
 

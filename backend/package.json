@@ -9,7 +9,8 @@
     "lint": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "ci": "npm run prisma:generate && npm run lint && bash -n scripts/api-smoke-test.sh"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

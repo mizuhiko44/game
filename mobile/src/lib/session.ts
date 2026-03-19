@@ -50,12 +50,14 @@ export async function clearSavedNickname() {
   delete getMemoryStore()[NICKNAME_KEY];
 }
 
-
 export type AuthSessionDraft = {
   accessToken?: string | null;
   refreshToken?: string | null;
   userId?: string | null;
   nickname?: string | null;
+  role?: string | null;
+  expiresAt?: string | null;
+  refreshExpiresAt?: string | null;
 };
 
 export async function saveAuthSession(session: AuthSessionDraft) {

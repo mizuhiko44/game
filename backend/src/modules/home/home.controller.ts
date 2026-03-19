@@ -15,7 +15,7 @@ export async function getHome(req: AuthedRequest, res: Response) {
   ]);
 
   return res.json({
-    userSummary: { id: user.id, nickname: user.nickname, totalPoints: user.totalPoints, regionCode: user.regionCode },
+    userSummary: { id: user.id, nickname: user.nickname, totalPoints: user.totalPoints, regionCode: user.regionCode, role: user.role },
     avatarSummary: user.avatar,
     recommendedEvents,
     endingSoonEvents,

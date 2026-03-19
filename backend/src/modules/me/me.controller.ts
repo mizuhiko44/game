@@ -29,9 +29,11 @@ export async function getMe(req: AuthedRequest, res: Response) {
   }
 
   return res.json({
+    id: user.id,
     nickname: user.nickname,
     regionCode: user.regionCode,
     totalPoints: user.totalPoints,
+    role: user.role,
     totalVotes: allVotes.length,
     hitRate: settledVotes.length ? wins / settledVotes.length : 0,
     avatarLevel: user.avatar?.level ?? 1,

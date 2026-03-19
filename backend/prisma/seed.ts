@@ -59,12 +59,13 @@ async function main() {
 
   const user = await prisma.user.upsert({
     where: { id: "usr_demo_1" },
-    update: { nickname: "DemoUser", regionCode: "kanagawa" },
+    update: { nickname: "DemoUser", regionCode: "kanagawa", role: "admin" },
     create: {
       id: "usr_demo_1",
       nickname: "DemoUser",
       regionCode: "kanagawa",
       totalPoints: 1000,
+      role: "admin",
     },
   });
 
@@ -94,6 +95,7 @@ async function main() {
 
   console.log("Seed completed.");
   console.log("Demo user id (x-user-id): usr_demo_1");
+  console.log("Demo user role: admin");
   console.log("Sample global event id:", eventGlobal.id);
 }
 

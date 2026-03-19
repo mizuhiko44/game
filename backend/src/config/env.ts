@@ -28,6 +28,7 @@ export const env = {
   authMode: (process.env.AUTH_MODE ?? "mvp_header") as AuthMode,
   jwtIssuer: process.env.JWT_ISSUER ?? "prediction-game-mvp",
   jwtAudience: process.env.JWT_AUDIENCE ?? "prediction-game-clients",
+  jwtSecret: process.env.JWT_SECRET ?? "development-insecure-jwt-secret",
   accessTokenTtlMinutes: parseNumber(process.env.ACCESS_TOKEN_TTL_MINUTES, 60),
   refreshTokenTtlDays: parseNumber(process.env.REFRESH_TOKEN_TTL_DAYS, 30),
   monitoringEnabled: (process.env.MONITORING_ENABLED ?? "false") === "true",
