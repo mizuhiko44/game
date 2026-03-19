@@ -3,7 +3,9 @@
 MVP構成:
 - `backend/`: Node.js + TypeScript + Express + Prisma
 - `mobile/`: React Native (Expo) 画面雛形
-- `docs/mvp-design.md`: 設計書
+- `docs/mvp-design.md`: 設計仕様書
+- `docs/mobile-rollout-plan.md`: スマホ展開構想
+- `docs/web-mobile-foundation-plan.md`: Web / スマホ両対応の土台構想
 - `docker-compose.yml`: ローカル PostgreSQL
 
 ## API base / 認証

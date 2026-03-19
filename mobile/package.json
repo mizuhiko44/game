@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "expo start"
+    "start": "expo start",
+    "web": "expo start --web"
   },
   "dependencies": {
     "expo": "~51.0.28",
