@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient, User, UserRole } from "@prisma/client";
 import { createHash, createHmac, randomBytes } from "crypto";
 import { env } from "../config/env";
+import { logger } from "./logger";
 import { prisma } from "./prisma";
 
 type TokenKind = "access" | "refresh";
@@ -34,6 +35,9 @@ export type AuthResponse = {
 };
 
 type AuthPrismaClient = Pick<PrismaClient, "authSession"> | Prisma.TransactionClient;
+type AuthSessionDelegate = PrismaClient["authSession"];
+
+let hasWarnedAboutMissingAuthSession = false;
 
 function base64UrlEncode(value: string | Buffer) {
   return Buffer.from(value)
@@ -51,6 +55,18 @@ function base64UrlDecode(value: string) {
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
+}
+
+function getAuthSessionDelegate(client: AuthPrismaClient | PrismaClient = prisma): AuthSessionDelegate | null {
+  const delegate = (client as { authSession?: AuthSessionDelegate }).authSession;
+  if (delegate) return delegate;
+
+  if (!hasWarnedAboutMissingAuthSession) {
+    hasWarnedAboutMissingAuthSession = true;
+    logger.warn("authSession delegate is unavailable; falling back to stateless refresh tokens. Run prisma generate/migrate to enable session persistence.");
+  }
+
+  return null;
 }
 
 export function resolveUserRole(user: Pick<UserLike, "id" | "nickname"> & { role?: UserRole | null }): UserRole {
@@ -131,13 +147,16 @@ export async function issueAuthTokensForUser(user: UserLike, dbClient: AuthPrism
   const expiresAt = new Date(Date.now() + env.accessTokenTtlMinutes * 60 * 1000);
   const refreshExpiresAt = new Date(Date.now() + env.refreshTokenTtlDays * 24 * 60 * 60 * 1000);
 
-  await dbClient.authSession.create({
-    data: {
-      userId: serializedUser.id,
-      tokenHash: hashToken(refreshToken),
-      expiresAt: refreshExpiresAt,
-    },
-  });
+  const authSession = getAuthSessionDelegate(dbClient);
+  if (authSession) {
+    await authSession.create({
+      data: {
+        userId: serializedUser.id,
+        tokenHash: hashToken(refreshToken),
+        expiresAt: refreshExpiresAt,
+      },
+    });
+  }
 
   return {
     user: serializedUser,
@@ -162,18 +181,28 @@ export async function findUserByAccessToken(token: string) {
 export async function rotateRefreshToken(refreshToken: string): Promise<AuthResponse> {
   const claims = verifyRefreshToken(refreshToken);
   const tokenHash = hashToken(refreshToken);
-  const session = await prisma.authSession.findUnique({
+  const user = await prisma.user.findUnique({ where: { id: claims.sub } });
+  if (!user) throw new Error("user not found");
+
+  const authSession = getAuthSessionDelegate(prisma);
+  if (!authSession) {
+    return issueAuthTokensForUser(user);
+  }
+
+  const session = await authSession.findUnique({
     where: { tokenHash },
   });
   if (!session || session.userId !== claims.sub) throw new Error("refresh session not found");
   if (session.revokedAt) throw new Error("refresh session revoked");
   if (session.expiresAt <= new Date()) throw new Error("refresh session expired");
 
-  const user = await prisma.user.findUnique({ where: { id: claims.sub } });
-  if (!user) throw new Error("user not found");
-
   return prisma.$transaction(async (tx) => {
-    await tx.authSession.update({
+    const txAuthSession = getAuthSessionDelegate(tx);
+    if (!txAuthSession) {
+      return issueAuthTokensForUser(user);
+    }
+
+    await txAuthSession.update({
       where: { tokenHash },
       data: { revokedAt: new Date() },
     });
@@ -184,8 +213,13 @@ export async function rotateRefreshToken(refreshToken: string): Promise<AuthResp
 
 export async function revokeRefreshToken(refreshToken: string) {
   const claims = verifyRefreshToken(refreshToken);
+  const authSession = getAuthSessionDelegate(prisma);
 
-  await prisma.authSession.updateMany({
+  if (!authSession) {
+    return;
+  }
+
+  await authSession.updateMany({
     where: {
       tokenHash: hashToken(refreshToken),
       userId: claims.sub,

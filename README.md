@@ -56,7 +56,22 @@ npm run dev
 ```
 
 > `backend/.env.example` は `docker-compose.yml` のDB初期値（`postgres/postgres`, `prediction_game`）に合わせています。
+> backend の既定ポートは `3000` です。`PORT` を変えていないのに `:3000` で起動していれば正常です。
 > 追加で `LOG_DIR` を指定すると、backend はコンソール出力に加えてログファイルも保存します（既定: `backend/logs/`）。
+
+### 2.1) `authSession.create` エラーが出る場合
+`TypeError: Cannot read properties of undefined (reading 'create')` が出る場合は、Prisma Client が最新 schema とずれている可能性が高いです。
+
+```bash
+cd backend
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:seed
+npm run dev
+```
+
+このリポジトリは `AuthSession` を使うため、`npm install` だけでは足りず `prisma generate` と `prisma migrate` も必要です。
 
 ## Backend logs
 - request / warn / error は `backend/logs/app.log` に保存されます。
@@ -66,7 +81,7 @@ npm run dev
 ## Minimum API smoke test
 - `backend/scripts/api-smoke-test.sh` を追加しました。
 - 前提: backend / DB が起動済みで、seed データ投入済みであること。
-- 例: `BASE_URL=http://localhost:4000 bash backend/scripts/api-smoke-test.sh`
+- 例: `BASE_URL=http://localhost:3000 bash backend/scripts/api-smoke-test.sh`
 - script は JWT が返るログイン応答に追随しており、`Authorization` と `x-user-id` の両方を使って transition モードの疎通確認ができます。
 
 ## Minimum CI

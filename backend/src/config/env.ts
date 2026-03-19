@@ -19,7 +19,7 @@ function parseNumber(value: string | undefined, fallback: number) {
 }
 
 export const env = {
-  port: parseNumber(process.env.PORT, 4000),
+  port: parseNumber(process.env.PORT, 3000),
   nodeEnv: process.env.NODE_ENV ?? "development",
   appEnv: (process.env.APP_ENV ?? "local") as AppEnv,
   logDir: process.env.LOG_DIR ?? "logs",

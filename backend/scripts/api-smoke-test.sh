@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="${BASE_URL:-http://localhost:4000}"
+BASE_URL="${BASE_URL:-http://localhost:3000}"
 API_BASE="${BASE_URL%/}/api"
 NICKNAME="smoke_$(date +%s)"
 TMP_DIR="$(mktemp -d)"
