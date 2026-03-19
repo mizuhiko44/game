@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View, Text, useWindowDimensions } from "react-native";
 import { useEffect, useState } from "react";
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
@@ -14,18 +14,31 @@ import { VoteCompleteScreen } from "./src/screens/VoteCompleteScreen";
 import { AdminScreen } from "./src/screens/AdminScreen";
 import { apiRequest } from "./src/lib/api";
 import { clearAuthSession, clearSavedNickname, getSavedNickname } from "./src/lib/session";
-import { User, VoteCreateResponse, VoteHistoryItem } from "./src/lib/types";
-import { Tab } from "./src/lib/navigation";
+import { User } from "./src/lib/types";
 import { AppShell } from "./src/components/AppShell";
-import { APP_ENV, AUTH_MODE } from "./src/lib/env";
+import { AppStateProvider, useAppState } from "./src/state/AppState";
+import { getCurrentRouteState, subscribeRouteChanges, syncRouteState } from "./src/lib/router";
+import { reportClientError } from "./src/lib/monitoring";
 
-export default function App() {
-  const [tab, setTab] = useState<Tab>("Onboarding");
-  const [user, setUser] = useState<User | null>(null);
+function AppInner() {
   const [booting, setBooting] = useState(true);
-  const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
-  const [lastVote, setLastVote] = useState<VoteCreateResponse | undefined>();
-  const [selectedResult, setSelectedResult] = useState<VoteHistoryItem | undefined>();
+  const { width } = useWindowDimensions();
+  const { tab, setTab, user, setUser, selectedEventId, setSelectedEventId, lastVote, setLastVote, selectedResult, setSelectedResult } = useAppState();
+
+  useEffect(() => {
+    const route = getCurrentRouteState();
+    setTab(route.tab);
+    if (route.selectedEventId) setSelectedEventId(route.selectedEventId);
+    const unsubscribe = subscribeRouteChanges((nextRoute) => {
+      setTab(nextRoute.tab);
+      setSelectedEventId(nextRoute.selectedEventId);
+    });
+    return unsubscribe;
+  }, [setSelectedEventId, setTab]);
+
+  useEffect(() => {
+    syncRouteState({ tab, selectedEventId, selectedResultId: selectedResult?.id });
+  }, [tab, selectedEventId, selectedResult]);
 
   useEffect(() => {
     async function bootstrap() {
@@ -37,8 +50,9 @@ export default function App() {
           body: { nickname: savedNickname },
         });
         setUser(rememberedUser);
-        setTab("Home");
-      } catch {
+        if (tab === "Onboarding") setTab("Home");
+      } catch (error) {
+        reportClientError(error, { phase: "bootstrap" });
         await clearSavedNickname();
         await clearAuthSession();
       } finally {
@@ -46,7 +60,10 @@ export default function App() {
       }
     }
 
-    bootstrap().catch(() => setBooting(false));
+    bootstrap().catch((error) => {
+      reportClientError(error, { phase: "bootstrap_outer" });
+      setBooting(false);
+    });
   }, []);
 
   const logout = async () => {
@@ -63,8 +80,8 @@ export default function App() {
     if (tab === "Onboarding") {
       return (
         <OnboardingScreen
-          onDone={(u) => {
-            setUser(u);
+          onDone={(nextUser) => {
+            setUser(nextUser);
             setTab("Home");
           }}
         />
@@ -110,7 +127,7 @@ export default function App() {
     if (tab === "ResultDetail") return <ResultDetailScreen result={selectedResult} />;
     if (tab === "Avatar") return <AvatarScreen userId={user?.id} />;
     if (tab === "MyPage") return <MyPageScreen userId={user?.id} />;
-    if (tab === "Admin") return <AdminScreen userId={user?.id} />;
+    if (tab === "Admin") return <AdminScreen userId={user?.id} isWideLayout={width >= 960} />;
     return <HomeScreen userId={user?.id} />;
   };
 
@@ -122,9 +139,13 @@ export default function App() {
     );
   }
 
+  return <AppShell onLogout={logout}>{renderCurrentScreen()}</AppShell>;
+}
+
+export default function App() {
   return (
-    <AppShell tab={tab} onTabChange={setTab} nickname={user?.nickname} userId={user?.id} onLogout={logout} appEnv={APP_ENV} authMode={AUTH_MODE}>
-      {renderCurrentScreen()}
-    </AppShell>
+    <AppStateProvider>
+      <AppInner />
+    </AppStateProvider>
   );
 }

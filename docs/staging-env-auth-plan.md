@@ -11,6 +11,19 @@
 
 ---
 
+## 1.5 完了判定
+現時点では **完了ではなく、土台追加まで完了** です。
+
+完了とみなす条件は以下です。
+- staging backend が実際に公開されている
+- mobile / web が staging に接続して確認できる
+- 認証方式（JWT移行方針・role設計・token保存方式）が文書だけでなく API仕様として確定している
+- onboarding / vote / auto settle / admin result registration / avatar level-up の最低限APIテストが通る
+
+したがって、今回の状態は「最優先事項の着手完了・基盤準備完了」であり、「最優先事項の完了」ではありません。
+
+---
+
 ## 2. 今回追加する土台
 
 ### 2.1 backend の環境分離
@@ -80,6 +93,13 @@ mobile では以下を公開環境変数で扱います。
 - secure storage 対応
 - auth middleware の JWT 化
 - admin role チェック
+
+### 4.3 今回の追加物
+- `backend/.env.staging.example`
+- `mobile/.env.staging.example`
+- `docs/auth-jwt-spec.md`
+- `backend/scripts/api-smoke-test.sh`
+- monitoring 向けの backend / mobile フック
 
 ---
 

@@ -9,6 +9,7 @@ const CARD_STYLE = { backgroundColor: "#141D34", borderRadius: 10, padding: 12, 
 const EVENT_TYPES: AdminCreateEventPayload["eventType"][] = ["global", "local"];
 const CATEGORIES: AdminCreateEventPayload["category"][] = ["sports", "economy", "entertainment", "local"];
 const SECTION_BUTTON_STYLE = { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 } as const;
+const TABLE_ROW_STYLE = { flexDirection: "row", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#2B3554" } as const;
 
 type AdminSection = "create" | "pending" | "users";
 
@@ -17,7 +18,7 @@ function toLocalDateTimeValue(date: Date) {
   return offsetDate.toISOString().slice(0, 16);
 }
 
-export function AdminScreen({ userId }: { userId?: string }) {
+export function AdminScreen({ userId, isWideLayout = false }: { userId?: string; isWideLayout?: boolean }) {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [registeredUsers, setRegisteredUsers] = useState<AdminRegisteredUser[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
@@ -111,11 +112,7 @@ export function AdminScreen({ userId }: { userId?: string }) {
         body: { eventId: selectedEventId, winningOptionId },
       });
       setSettleResult(result);
-      setMessage(
-        result.settlementTriggered
-          ? "結果を登録し、resultAt 到達済みのため自動精算しました。"
-          : "結果を登録しました。resultAt 到達後に自動精算されます。"
-      );
+      setMessage(result.settlementTriggered ? "結果を登録し、resultAt 到達済みのため自動精算しました。" : "結果を登録しました。resultAt 到達後に自動精算されます。");
       await refreshEvents();
       await refreshDetail(selectedEventId);
     } catch (e) {
@@ -132,15 +129,7 @@ export function AdminScreen({ userId }: { userId?: string }) {
       ] as const).map(([value, label]) => {
         const selected = activeSection === value;
         return (
-          <Pressable
-            key={value}
-            onPress={() => setActiveSection(value)}
-            style={{
-              ...SECTION_BUTTON_STYLE,
-              backgroundColor: selected ? "#5BA7FF" : "#141D34",
-              borderColor: selected ? "#5BA7FF" : "#2B3554",
-            }}
-          >
+          <Pressable key={value} onPress={() => setActiveSection(value)} style={{ ...SECTION_BUTTON_STYLE, backgroundColor: selected ? "#5BA7FF" : "#141D34", borderColor: selected ? "#5BA7FF" : "#2B3554" }}>
             <Text style={{ color: selected ? "#0B1020" : "#F4F7FF", fontWeight: "700" }}>{label}</Text>
           </Pressable>
         );
@@ -148,14 +137,107 @@ export function AdminScreen({ userId }: { userId?: string }) {
     </View>
   );
 
+  const renderPendingSection = () => (
+    <>
+      <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 20 }}>結果未精算イベント</Text>
+      <View style={{ flexDirection: isWideLayout ? "row" : "column", gap: 16, alignItems: "flex-start" }}>
+        <View style={{ flex: 1, width: "100%", minWidth: isWideLayout ? 320 : undefined }}>
+          {pendingEvents.map((event) => (
+            <Pressable key={event.id} onPress={() => setSelectedEventId(event.id)} style={{ ...CARD_STYLE, marginBottom: 8, borderWidth: 1, borderColor: selectedEventId === event.id ? "#5BA7FF" : "#2B3554" }}>
+              <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>{event.title}</Text>
+              <Text style={{ color: "#AAB4D4" }}>{event.status}</Text>
+            </Pressable>
+          ))}
+          {!pendingEvents.length && <Text style={{ color: "#AAB4D4" }}>未精算イベントはありません。</Text>}
+        </View>
+
+        <View style={{ flex: 2, width: "100%" }}>
+          {detail && (
+            <View style={CARD_STYLE}>
+              <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>選択中イベント</Text>
+              <Text style={{ color: "#F4F7FF" }}>title: {detail.title}</Text>
+              <Text style={{ color: "#F4F7FF" }}>status: {detail.status}</Text>
+              <Text style={{ color: "#F4F7FF" }}>voteEndAt: {detail.voteEndAt}</Text>
+              <Text style={{ color: "#F4F7FF" }}>resultAt: {detail.resultAt ?? "-"}</Text>
+              <Text style={{ color: "#F4F7FF" }}>participants: {detail.participantCount ?? 0}</Text>
+              <Text style={{ color: "#F4F7FF" }}>alreadyVoted(by admin user): {String(detail.alreadyVoted)}</Text>
+              <Text style={{ color: "#F4F7FF" }}>registered winning option: {detail.result?.winningOption?.label ?? "未登録"}</Text>
+              <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 12 }}>正解選択肢を選択</Text>
+              {detail.options?.map((option) => (
+                <Pressable key={option.id} onPress={() => setWinningOptionId(option.id)} style={{ paddingVertical: 6 }}>
+                  <Text style={{ color: winningOptionId === option.id ? "#5BA7FF" : "#F4F7FF" }}>{option.label}</Text>
+                </Pressable>
+              ))}
+              <Pressable onPress={submitSettle} disabled={detail.status === "settled" || !winningOptionId} style={{ backgroundColor: detail.status === "settled" || !winningOptionId ? "#4C5A80" : "#5BA7FF", padding: 12, borderRadius: 8, marginTop: 10 }}>
+                <Text style={{ color: "#0B1020", textAlign: "center", fontWeight: "700" }}>正解を登録する</Text>
+              </Pressable>
+            </View>
+          )}
+          {!detail && <Text style={{ color: "#AAB4D4" }}>イベントを選択すると詳細を表示します。</Text>}
+          {settleResult && (
+            <View style={[CARD_STYLE, { marginTop: 12 }]}>
+              <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>結果登録サマリー</Text>
+              <Text style={{ color: "#F4F7FF" }}>idempotent: {String(settleResult.idempotent)}</Text>
+              <Text style={{ color: "#F4F7FF" }}>settlementTriggered: {String(settleResult.settlementTriggered)}</Text>
+              <Text style={{ color: "#F4F7FF" }}>eventStatus: {settleResult.eventStatus}</Text>
+              <Text style={{ color: "#F4F7FF" }}>processedVoteCount: {settleResult.processedVoteCount}</Text>
+              <Text style={{ color: "#F4F7FF" }}>winnerCount: {settleResult.winnerCount}</Text>
+              <Text style={{ color: "#F4F7FF" }}>totalRewardPoints: {settleResult.totalRewardPoints}</Text>
+              <Text style={{ color: "#F4F7FF" }}>rewardedItemUserCount: {settleResult.rewardedItemUserCount}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </>
+  );
+
+  const renderUsersSection = () => (
+    <>
+      <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 20 }}>登録者リスト（最大100人）</Text>
+      {!isWideLayout && (
+        <View style={{ gap: 8 }}>
+          {registeredUsers.map((registeredUser) => (
+            <View key={registeredUser.id} style={CARD_STYLE}>
+              <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>{registeredUser.nickname}</Text>
+              <Text style={{ color: "#AAB4D4" }}>userId: {registeredUser.id}</Text>
+              <Text style={{ color: "#AAB4D4" }}>region: {registeredUser.regionCode}</Text>
+              <Text style={{ color: "#AAB4D4" }}>points: {registeredUser.totalPoints}</Text>
+              <Text style={{ color: "#AAB4D4" }}>avatar: {registeredUser.avatarType ?? "-"}</Text>
+              <Text style={{ color: "#AAB4D4" }}>createdAt: {registeredUser.createdAt}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      {isWideLayout && (
+        <View style={CARD_STYLE}>
+          <View style={{ ...TABLE_ROW_STYLE, borderBottomColor: "#5BA7FF" }}>
+            <Text style={{ color: "#5BA7FF", flex: 2, fontWeight: "700" }}>nickname</Text>
+            <Text style={{ color: "#5BA7FF", flex: 2, fontWeight: "700" }}>userId</Text>
+            <Text style={{ color: "#5BA7FF", flex: 1, fontWeight: "700" }}>region</Text>
+            <Text style={{ color: "#5BA7FF", flex: 1, fontWeight: "700" }}>points</Text>
+            <Text style={{ color: "#5BA7FF", flex: 1, fontWeight: "700" }}>avatar</Text>
+          </View>
+          {registeredUsers.map((registeredUser) => (
+            <View key={registeredUser.id} style={TABLE_ROW_STYLE}>
+              <Text style={{ color: "#F4F7FF", flex: 2 }}>{registeredUser.nickname}</Text>
+              <Text style={{ color: "#AAB4D4", flex: 2 }}>{registeredUser.id}</Text>
+              <Text style={{ color: "#F4F7FF", flex: 1 }}>{registeredUser.regionCode}</Text>
+              <Text style={{ color: "#F4F7FF", flex: 1 }}>{registeredUser.totalPoints}</Text>
+              <Text style={{ color: "#F4F7FF", flex: 1 }}>{registeredUser.avatarType ?? "-"}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      {!registeredUsers.length && <Text style={{ color: "#AAB4D4" }}>登録者はいません。</Text>}
+    </>
+  );
+
   return (
     <ScreenTemplate title="Admin">
       {!userId && <Text style={{ color: "#AAB4D4" }}>管理操作には x-user-id が必要です。</Text>}
       {!!error && <Text style={{ color: "#ff8f8f" }}>{error}</Text>}
       {!!message && <Text style={{ color: "#8fe6a4" }}>{message}</Text>}
-
       {renderSectionButtons()}
-
       {activeSection === "create" && (
         <>
           <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>イベント作成</Text>
@@ -206,85 +288,8 @@ export function AdminScreen({ userId }: { userId?: string }) {
           </View>
         </>
       )}
-
-      {activeSection === "pending" && (
-        <>
-          <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 20 }}>結果未精算イベント</Text>
-          {pendingEvents.map((event) => (
-            <Pressable key={event.id} onPress={() => setSelectedEventId(event.id)} style={{ paddingVertical: 6 }}>
-              <Text style={{ color: selectedEventId === event.id ? "#5BA7FF" : "#F4F7FF" }}>
-                {event.title} [{event.status}]
-              </Text>
-            </Pressable>
-          ))}
-          {!pendingEvents.length && <Text style={{ color: "#AAB4D4" }}>未精算イベントはありません。</Text>}
-
-          {detail && (
-            <>
-              <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 12 }}>選択中イベント</Text>
-              <Text style={{ color: "#F4F7FF" }}>title: {detail.title}</Text>
-              <Text style={{ color: "#F4F7FF" }}>status: {detail.status}</Text>
-              <Text style={{ color: "#F4F7FF" }}>voteEndAt: {detail.voteEndAt}</Text>
-              <Text style={{ color: "#F4F7FF" }}>resultAt: {detail.resultAt ?? "-"}</Text>
-              <Text style={{ color: "#F4F7FF" }}>participants: {detail.participantCount ?? 0}</Text>
-              <Text style={{ color: "#F4F7FF" }}>alreadyVoted(by admin user): {String(detail.alreadyVoted)}</Text>
-              <Text style={{ color: "#F4F7FF" }}>registered winning option: {detail.result?.winningOption?.label ?? "未登録"}</Text>
-
-              <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 12 }}>正解選択肢を選択</Text>
-              {detail.options?.map((option) => (
-                <Pressable key={option.id} onPress={() => setWinningOptionId(option.id)} style={{ paddingVertical: 6 }}>
-                  <Text style={{ color: winningOptionId === option.id ? "#5BA7FF" : "#F4F7FF" }}>{option.label}</Text>
-                </Pressable>
-              ))}
-
-              <Pressable
-                onPress={submitSettle}
-                disabled={detail.status === "settled" || !winningOptionId}
-                style={{
-                  backgroundColor: detail.status === "settled" || !winningOptionId ? "#4C5A80" : "#5BA7FF",
-                  padding: 12,
-                  borderRadius: 8,
-                  marginTop: 10,
-                }}
-              >
-                <Text style={{ color: "#0B1020", textAlign: "center", fontWeight: "700" }}>正解を登録する</Text>
-              </Pressable>
-            </>
-          )}
-
-          {settleResult && (
-            <>
-              <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 16 }}>結果登録サマリー</Text>
-              <Text style={{ color: "#F4F7FF" }}>idempotent: {String(settleResult.idempotent)}</Text>
-              <Text style={{ color: "#F4F7FF" }}>settlementTriggered: {String(settleResult.settlementTriggered)}</Text>
-              <Text style={{ color: "#F4F7FF" }}>eventStatus: {settleResult.eventStatus}</Text>
-              <Text style={{ color: "#F4F7FF" }}>processedVoteCount: {settleResult.processedVoteCount}</Text>
-              <Text style={{ color: "#F4F7FF" }}>winnerCount: {settleResult.winnerCount}</Text>
-              <Text style={{ color: "#F4F7FF" }}>totalRewardPoints: {settleResult.totalRewardPoints}</Text>
-              <Text style={{ color: "#F4F7FF" }}>rewardedItemUserCount: {settleResult.rewardedItemUserCount}</Text>
-            </>
-          )}
-        </>
-      )}
-
-      {activeSection === "users" && (
-        <>
-          <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 20 }}>登録者リスト（最大100人）</Text>
-          <View style={{ gap: 8 }}>
-            {registeredUsers.map((registeredUser) => (
-              <View key={registeredUser.id} style={CARD_STYLE}>
-                <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>{registeredUser.nickname}</Text>
-                <Text style={{ color: "#AAB4D4" }}>userId: {registeredUser.id}</Text>
-                <Text style={{ color: "#AAB4D4" }}>region: {registeredUser.regionCode}</Text>
-                <Text style={{ color: "#AAB4D4" }}>points: {registeredUser.totalPoints}</Text>
-                <Text style={{ color: "#AAB4D4" }}>avatar: {registeredUser.avatarType ?? "-"}</Text>
-                <Text style={{ color: "#AAB4D4" }}>createdAt: {registeredUser.createdAt}</Text>
-              </View>
-            ))}
-            {!registeredUsers.length && <Text style={{ color: "#AAB4D4" }}>登録者はいません。</Text>}
-          </View>
-        </>
-      )}
+      {activeSection === "pending" && renderPendingSection()}
+      {activeSection === "users" && renderUsersSection()}
     </ScreenTemplate>
   );
 }

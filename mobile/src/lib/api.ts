@@ -1,3 +1,4 @@
+import { reportClientError } from "./monitoring";
 import { API_BASE_URL } from "./env";
 
 
@@ -48,7 +49,8 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}) {
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
     });
-  } catch {
+  } catch (error) {
+    reportClientError(error, { phase: "network", path, apiBaseUrl: API_BASE_URL });
     throw new ApiError(`Network error: backendに接続できません。API_BASE_URL=${API_BASE_URL} を確認してください。`);
   }
 
@@ -56,6 +58,7 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}) {
   const data = text ? safeJsonParse(text) : null;
 
   if (!response.ok) {
+    reportClientError(new Error(`HTTP ${response.status}`), { phase: "response", path, status: response.status, details: data });
     throw new ApiError((data as { message?: string } | null)?.message ?? `Request failed: ${response.status}`, response.status, data);
   }
 

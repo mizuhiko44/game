@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { logger } from "../lib/logger";
+import { reportServerError } from "../lib/monitoring";
 
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
@@ -33,5 +34,6 @@ export function errorMiddleware(err: unknown, req: Request, res: Response, _next
     path: req.originalUrl,
     error: err instanceof Error ? { message: err.message, stack: err.stack } : String(err),
   });
+  reportServerError(err, { requestId, path: req.originalUrl, method: req.method });
   return res.status(500).json({ message: "Internal Server Error" });
 }

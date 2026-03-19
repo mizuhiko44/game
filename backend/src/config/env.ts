@@ -30,4 +30,7 @@ export const env = {
   jwtAudience: process.env.JWT_AUDIENCE ?? "prediction-game-clients",
   accessTokenTtlMinutes: parseNumber(process.env.ACCESS_TOKEN_TTL_MINUTES, 60),
   refreshTokenTtlDays: parseNumber(process.env.REFRESH_TOKEN_TTL_DAYS, 30),
+  monitoringEnabled: (process.env.MONITORING_ENABLED ?? "false") === "true",
+  sentryDsn: process.env.SENTRY_DSN ?? "",
+  sentryEnvironment: process.env.SENTRY_ENVIRONMENT ?? process.env.APP_ENV ?? "local",
 };

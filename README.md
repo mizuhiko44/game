@@ -7,6 +7,8 @@ MVP構成:
 - `docs/mobile-rollout-plan.md`: スマホ展開構想
 - `docs/web-mobile-foundation-plan.md`: Web / スマホ両対応の土台構想
 - `docs/staging-env-auth-plan.md`: staging + env分離 + 認証設計 実施計画
+- `docs/secondary-priority-plan.md`: 次点項目 構想・設計仕様書
+- `docs/auth-jwt-spec.md`: JWT認証 移行設計仕様書
 - `docker-compose.yml`: ローカル PostgreSQL
 
 ## API base / 認証
@@ -29,9 +31,10 @@ MVP構成:
 
 ## Environment separation / auth groundwork
 - backend は `APP_ENV`, `PUBLIC_APP_URL`, `CORS_ORIGINS`, `AUTH_MODE`, `JWT_*` を使って local / staging / production を分離できる前提にしました。
+- `backend/.env.staging.example` と `mobile/.env.staging.example` を追加し、staging 用の設定雛形を用意しました。
 - mobile は `EXPO_PUBLIC_APP_ENV`, `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_AUTH_MODE` を使って接続先と認証モードを切り替えられます。
 - `AUTH_MODE` は `mvp_header`, `jwt_transition`, `jwt_required` の3段階を想定しています。
-- 詳細は `docs/staging-env-auth-plan.md` を参照してください。
+- 詳細は `docs/staging-env-auth-plan.md` と `docs/auth-jwt-spec.md` を参照してください。
 
 ## Local development setup
 
@@ -58,6 +61,11 @@ npm run dev
 - request / warn / error は `backend/logs/app.log` に保存されます。
 - error レベルは `backend/logs/error.log` にも保存されます。
 - 保存先は `.env` の `LOG_DIR` で変更できます。
+
+## Minimum API smoke test
+- `backend/scripts/api-smoke-test.sh` を追加しました。
+- 前提: backend / DB が起動済みで、seed データ投入済みであること。
+- 例: `BASE_URL=http://localhost:4000 bash backend/scripts/api-smoke-test.sh`
 
 ## Seeded sample data
 - Demo user id (`x-user-id`): `usr_demo_1`

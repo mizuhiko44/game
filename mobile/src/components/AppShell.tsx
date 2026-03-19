@@ -2,20 +2,16 @@ import { PropsWithChildren } from "react";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Tab, appTabs } from "../lib/navigation";
 import { isWideLayout, resolvePlatformLabel } from "../lib/platform";
+import { useAppState } from "../state/AppState";
 
 type AppShellProps = PropsWithChildren<{
-  tab: Tab;
-  onTabChange: (tab: Tab) => void;
-  nickname?: string;
-  userId?: string;
   onLogout?: () => void | Promise<void>;
-  appEnv?: string;
-  authMode?: string;
 }>;
 
-export function AppShell({ tab, onTabChange, nickname, userId, onLogout, appEnv, authMode, children }: AppShellProps) {
+export function AppShell({ onLogout, children }: AppShellProps) {
   const { width } = useWindowDimensions();
   const wide = isWideLayout(width);
+  const { tab, setTab, user, appEnv, authMode } = useAppState();
 
   if (wide) {
     return (
@@ -23,11 +19,11 @@ export function AppShell({ tab, onTabChange, nickname, userId, onLogout, appEnv,
         <View style={styles.sidebar}>
           <Text style={styles.brandTitle}>Prediction Game</Text>
           <Text style={styles.platformBadge}>{resolvePlatformLabel()} foundation</Text>
-          <Text style={styles.metaText}>env: {appEnv ?? "local"} / auth: {authMode ?? "mvp_header"}</Text>
+          <Text style={styles.metaText}>env: {appEnv} / auth: {authMode}</Text>
           <View style={styles.profileCard}>
-            <Text style={styles.profileText}>nickname: {nickname ?? "(未登録)"}</Text>
-            <Text style={styles.profileText}>x-user-id: {userId ?? "(未登録)"}</Text>
-            {!!userId && (
+            <Text style={styles.profileText}>nickname: {user?.nickname ?? "(未登録)"}</Text>
+            <Text style={styles.profileText}>x-user-id: {user?.id ?? "(未登録)"}</Text>
+            {!!user?.id && (
               <Pressable onPress={onLogout} style={styles.logoutButton}>
                 <Text style={styles.logoutButtonText}>ログアウト</Text>
               </Pressable>
@@ -37,11 +33,7 @@ export function AppShell({ tab, onTabChange, nickname, userId, onLogout, appEnv,
             {appTabs.map((entry) => {
               const active = entry.key === tab;
               return (
-                <Pressable
-                  key={entry.key}
-                  onPress={() => onTabChange(entry.key)}
-                  style={[styles.sidebarTab, active && styles.sidebarTabActive]}
-                >
+                <Pressable key={entry.key} onPress={() => setTab(entry.key)} style={[styles.sidebarTab, active && styles.sidebarTabActive]}>
                   <Text style={[styles.sidebarTabText, active && styles.sidebarTabTextActive]}>{entry.label}</Text>
                   <Text style={styles.sidebarSectionText}>{entry.section}</Text>
                 </Pressable>
@@ -57,8 +49,8 @@ export function AppShell({ tab, onTabChange, nickname, userId, onLogout, appEnv,
   return (
     <View style={styles.mobileRoot}>
       <View style={styles.userBar}>
-        <Text style={styles.userText}>env: {appEnv ?? "local"} / auth: {authMode ?? "mvp_header"} / nickname: {nickname ?? "(未登録)"} / x-user-id: {userId ?? "(未登録)"}</Text>
-        {!!userId && (
+        <Text style={styles.userText}>env: {appEnv} / auth: {authMode} / nickname: {user?.nickname ?? "(未登録)"} / x-user-id: {user?.id ?? "(未登録)"}</Text>
+        {!!user?.id && (
           <Pressable onPress={onLogout}>
             <Text style={styles.logoutText}>ログアウト</Text>
           </Pressable>
@@ -67,7 +59,7 @@ export function AppShell({ tab, onTabChange, nickname, userId, onLogout, appEnv,
       <View style={styles.mobileContent}>{children}</View>
       <View style={styles.tabBar}>
         {appTabs.map((entry) => (
-          <Pressable key={entry.key} onPress={() => onTabChange(entry.key)}>
+          <Pressable key={entry.key} onPress={() => setTab(entry.key)}>
             <Text style={[styles.tabLabel, tab === entry.key && styles.active]}>{entry.label}</Text>
           </Pressable>
         ))}
@@ -95,27 +87,10 @@ const styles = StyleSheet.create({
   desktopContent: { flex: 1 },
   mobileRoot: { flex: 1, backgroundColor: "#0E1428" },
   mobileContent: { flex: 1 },
-  userBar: {
-    minHeight: 28,
-    backgroundColor: "#0E1428",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    gap: 8,
-  },
+  userBar: { minHeight: 28, backgroundColor: "#0E1428", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 10, flexDirection: "row", gap: 8 },
   userText: { color: "#7F8DB6", fontSize: 11, flex: 1 },
   logoutText: { color: "#5BA7FF", fontSize: 11, fontWeight: "700" },
-  tabBar: {
-    minHeight: 56,
-    backgroundColor: "#151D33",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    flexWrap: "wrap",
-    paddingHorizontal: 4,
-    paddingVertical: 6,
-  },
+  tabBar: { minHeight: 56, backgroundColor: "#151D33", flexDirection: "row", justifyContent: "space-around", alignItems: "center", flexWrap: "wrap", paddingHorizontal: 4, paddingVertical: 6 },
   tabLabel: { color: "#AAB4D4", fontSize: 10, marginHorizontal: 2 },
   active: { color: "#5BA7FF", fontWeight: "700" },
 });
