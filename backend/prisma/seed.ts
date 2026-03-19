@@ -59,13 +59,13 @@ async function main() {
 
   const user = await prisma.user.upsert({
     where: { id: "usr_demo_1" },
-    update: { nickname: "DemoUser", regionCode: "kanagawa", role: "admin" },
+    update: { nickname: "DemoUser", regionCode: "kanagawa", role: "admin", totalPoints: 1000 },
     create: {
       id: "usr_demo_1",
       nickname: "DemoUser",
       regionCode: "kanagawa",
-      totalPoints: 1000,
       role: "admin",
+      totalPoints: 1000,
     },
   });
 

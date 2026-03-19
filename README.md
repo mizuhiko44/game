@@ -119,7 +119,7 @@ curl http://localhost:3000/api/votes/history \
 
 ### Mobile Admin UI (MVP)
 - `Admin` タブから未確定イベントを選択し、正解選択肢を指定して結果確定できます。
-- Admin API は `role=admin` のみ利用可能です。seed 済みの `usr_demo_1` は admin として作成されます。
+- Admin API は `role=admin` のみ利用可能です。seed 済みの `usr_demo_1` は DB 上でも `role=admin` で作成されます。
 - 結果確定後は `processedVoteCount`, `winnerCount`, `totalRewardPoints`, `rewardedItemUserCount` を確認できます。
 
 ### 5) Settle result (protected/admin endpoint in MVP)

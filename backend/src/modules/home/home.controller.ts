@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { serializeUser } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { AuthedRequest } from "../../middlewares/auth";
 import { syncEventLifecycles } from "../events/event-lifecycle";
@@ -14,8 +15,10 @@ export async function getHome(req: AuthedRequest, res: Response) {
     prisma.event.findMany({ where: { status: "settled" }, take: 5, orderBy: { resultAt: "desc" } }),
   ]);
 
+  const serializedUser = serializeUser(user);
+
   return res.json({
-    userSummary: { id: user.id, nickname: user.nickname, totalPoints: user.totalPoints, regionCode: user.regionCode, role: user.role },
+    userSummary: serializedUser,
     avatarSummary: user.avatar,
     recommendedEvents,
     endingSoonEvents,

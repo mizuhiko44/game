@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { serializeUser } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { AuthedRequest } from "../../middlewares/auth";
 import { syncEventLifecycles } from "../events/event-lifecycle";
@@ -28,12 +29,14 @@ export async function getMe(req: AuthedRequest, res: Response) {
     }
   }
 
+  const serializedUser = serializeUser(user);
+
   return res.json({
-    id: user.id,
-    nickname: user.nickname,
-    regionCode: user.regionCode,
-    totalPoints: user.totalPoints,
-    role: user.role,
+    id: serializedUser.id,
+    nickname: serializedUser.nickname,
+    regionCode: serializedUser.regionCode,
+    totalPoints: serializedUser.totalPoints,
+    role: serializedUser.role,
     totalVotes: allVotes.length,
     hitRate: settledVotes.length ? wins / settledVotes.length : 0,
     avatarLevel: user.avatar?.level ?? 1,

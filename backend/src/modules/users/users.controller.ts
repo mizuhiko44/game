@@ -30,7 +30,6 @@ export async function onboarding(req: Request, res: Response) {
         nickname: parsed.nickname,
         regionCode: parsed.regionCode,
         totalPoints: 1000,
-        role: "user",
       },
     });
 
@@ -51,7 +50,7 @@ export async function onboarding(req: Request, res: Response) {
       },
     });
 
-    return issueAuthTokensForUser(tx, created);
+    return issueAuthTokensForUser(created);
   });
 
   return res.status(201).json(payload);
@@ -65,7 +64,7 @@ export async function login(req: Request, res: Response) {
   const user = users.find((row) => row.nickname.trim().toLowerCase() === normalizedNickname);
   if (!user) throw new HttpError(404, "user not found");
 
-  return res.json(await issueAuthTokensForUser(prisma, user));
+  return res.json(await issueAuthTokensForUser(user));
 }
 
 export async function listRegisteredUsers(_req: Request, res: Response) {

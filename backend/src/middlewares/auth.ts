@@ -1,7 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { env } from "../config/env";
-import { findUserByAccessToken } from "../lib/auth";
+import { findUserByAccessToken, resolveUserRole } from "../lib/auth";
 import { prisma } from "../lib/prisma";
 
 export type AuthedRequest = Request & {
@@ -22,7 +22,7 @@ async function attachUser(req: Request, userId: string, authSource: "header" | "
 
   const authed = req as AuthedRequest;
   authed.userId = user.id;
-  authed.userRole = user.role;
+  authed.userRole = resolveUserRole(user);
   authed.authSource = authSource;
   return authed;
 }
@@ -43,7 +43,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
       const user = await findUserByAccessToken(bearerToken);
       const authed = req as AuthedRequest;
       authed.userId = user.id;
-      authed.userRole = user.role;
+      authed.userRole = resolveUserRole(user);
       authed.authSource = "jwt";
       return next();
     }
