@@ -12,7 +12,7 @@ export function AppShell({ onLogout, children }: AppShellProps) {
   const { width } = useWindowDimensions();
   const wide = isWideLayout(width);
   const { tab, setTab, user, appEnv, authMode } = useAppState();
-  const visibleTabs = appTabs.filter((entry) => entry.key !== "Admin" || user?.role === "admin");
+  const visibleTabs = appTabs;
 
   if (wide) {
     return (

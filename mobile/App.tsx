@@ -7,6 +7,7 @@ import { reportClientError } from "./src/lib/monitoring";
 import { getCurrentRouteState, subscribeRouteChanges, syncRouteState } from "./src/lib/router";
 import { clearAuthSession, clearSavedNickname, getAuthSession, getSavedNickname, saveAuthSession } from "./src/lib/session";
 import { AdminScreen } from "./src/screens/AdminScreen";
+import { AdminAccessScreen } from "./src/screens/AdminAccessScreen";
 import { AvatarScreen } from "./src/screens/AvatarScreen";
 import { EventDetailScreen } from "./src/screens/EventDetailScreen";
 import { EventListScreen } from "./src/screens/EventListScreen";
@@ -95,12 +96,6 @@ function AppInner() {
     });
   }, []);
 
-  useEffect(() => {
-    if (tab === "Admin" && user?.role !== "admin") {
-      setTab(user ? "Home" : "Onboarding");
-    }
-  }, [tab, user, setTab]);
-
   const logout = async () => {
     try {
       const session = await getAuthSession();
@@ -174,7 +169,13 @@ function AppInner() {
     if (tab === "ResultDetail") return <ResultDetailScreen result={selectedResult} />;
     if (tab === "Avatar") return <AvatarScreen userId={user?.id} />;
     if (tab === "MyPage") return <MyPageScreen userId={user?.id} />;
-    if (tab === "Admin") return user?.role === "admin" ? <AdminScreen userId={user.id} isWideLayout={width >= 960} /> : <HomeScreen userId={user?.id} />;
+    if (tab === "Admin") {
+      return user?.role === "admin" ? (
+        <AdminScreen userId={user.id} isWideLayout={width >= 960} />
+      ) : (
+        <AdminAccessScreen userId={user?.id} role={user?.role} />
+      );
+    }
     return <HomeScreen userId={user?.id} />;
   };
 
