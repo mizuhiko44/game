@@ -1,4 +1,5 @@
 export type UserRole = "user" | "admin";
+export type HomeNotificationKind = "result_win" | "result_loss";
 
 export type User = {
   id: string;
@@ -56,6 +57,30 @@ export type EventItem = {
     status: string;
     rewardPoints: number;
   } | null;
+};
+
+export type HomePayload = {
+  userSummary: User;
+  avatarSummary: {
+    id: string;
+    avatarType: string;
+    level: number;
+    exp: number;
+  } | null;
+  recommendedEvents: EventItem[];
+  endingSoonEvents: EventItem[];
+  settledEvents: EventItem[];
+  recentNotifications: Array<{
+    id: string;
+    kind: HomeNotificationKind;
+    eventId: string;
+    eventTitle: string;
+    settledAt: string;
+    selectedOptionLabel: string;
+    winningOptionLabel: string | null;
+    rewardPoints: number;
+    message: string;
+  }>;
 };
 
 export type EventDetailPayload = EventItem & {

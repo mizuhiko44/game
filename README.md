@@ -25,6 +25,7 @@ MVP構成:
 - `mobile/` は UI雛形のみではなく、MVPの主要APIに接続済みです。
 - 管理者向けの簡易 Admin 画面を追加し、結果未確定イベントの選択・正解入力・結果確定サマリー確認が可能です。
 - 実装済み: onboarding, home, events, vote作成, vote history, results, avatar取得/level-up, my page。
+- Home には直近で確定した自分の投票結果通知（的中 / 不的中）を表示します。
 - APIベースURLは `mobile/src/lib/api.ts` の `API_BASE_URL` を利用します。
   - Web開発の既定値: `http://localhost:3000`
   - 実機/別端末テスト: `EXPO_PUBLIC_API_BASE_URL` を `http://<PCのLAN-IP>:3000` に設定
