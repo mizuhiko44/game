@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
+    "smoke:test": "bash scripts/api-smoke-test.sh",
     "ci": "npm run prisma:generate && npm run lint && bash -n scripts/api-smoke-test.sh"
   },
   "dependencies": {

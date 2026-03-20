@@ -10,6 +10,32 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: prediction_game
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d prediction_game"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/prediction_game
+      PORT: 3000
+      APP_ENV: local
+      PUBLIC_APP_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8081
+      AUTH_MODE: mvp_header
+      JWT_ISSUER: prediction-game-mvp
+      JWT_AUDIENCE: prediction-game-clients
+      JWT_SECRET: ci-jwt-secret
+      ACCESS_TOKEN_TTL_MINUTES: 60
+      REFRESH_TOKEN_TTL_DAYS: 30
     defaults:
       run:
         working-directory: backend
@@ -20,6 +46,21 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run ci
+      - run: npx prisma db push --skip-generate
+      - run: npm run prisma:seed
+      - name: Start backend server
+        run: npm run dev > /tmp/prediction-backend.log 2>&1 &
+      - name: Wait for health check
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/prediction-backend.log
+          exit 1
+      - run: BASE_URL=http://127.0.0.1:3000 npm run smoke:test
 
   mobile:
     runs-on: ubuntu-latest

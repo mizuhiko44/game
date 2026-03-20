@@ -86,6 +86,7 @@ npm run dev
 
 ## Minimum CI
 - GitHub Actions (`.github/workflows/ci.yml`) で backend の `npm run ci` と mobile の `npm run ci` を実行します。
+- backend CI ではさらに PostgreSQL service を起動し、`prisma db push` / `prisma seed` 後に backend を立ち上げて `npm run smoke:test` を実行します。
 
 ## Seeded sample data
 - Demo user id (`x-user-id`): `usr_demo_1`
