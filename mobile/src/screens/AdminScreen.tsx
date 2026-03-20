@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { ScreenTemplate } from "../components/ScreenTemplate";
 import { apiRequest } from "../lib/api";
+import { isWebPlatform } from "../lib/platform";
 import { AdminCreateEventPayload, AdminRegisteredUser, AdminSettleResponse, EventDetailPayload, EventItem } from "../lib/types";
 
 const INPUT_STYLE = { color: "white", borderWidth: 1, borderColor: "#2B3554", padding: 10, borderRadius: 8 } as const;
@@ -71,6 +72,9 @@ export function AdminScreen({ userId, isWideLayout = false }: { userId?: string;
   }, [selectedEventId, userId]);
 
   const pendingEvents = useMemo(() => events.filter((event) => event.status !== "settled"), [events]);
+  const settledEvents = useMemo(() => events.filter((event) => event.status === "settled"), [events]);
+  const adminUsers = useMemo(() => registeredUsers.filter((registeredUser) => registeredUser.role === "admin"), [registeredUsers]);
+  const latestSettledEvent = settledEvents[0];
 
   const submitCreate = async () => {
     if (!userId) return;
@@ -232,11 +236,53 @@ export function AdminScreen({ userId, isWideLayout = false }: { userId?: string;
     </>
   );
 
+  const renderWebOverview = () => (
+    <View style={{ gap: 16, marginBottom: 20 }}>
+      <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
+        {[
+          { label: "Open / Pending", value: pendingEvents.length, tone: "#5BA7FF" },
+          { label: "Settled", value: settledEvents.length, tone: "#8FE6A4" },
+          { label: "Registered users", value: registeredUsers.length, tone: "#FFD166" },
+          { label: "Admins", value: adminUsers.length, tone: "#FF8F8F" },
+        ].map((card) => (
+          <View key={card.label} style={{ ...CARD_STYLE, minWidth: 180, flex: 1, borderWidth: 1, borderColor: "#2B3554" }}>
+            <Text style={{ color: "#AAB4D4", fontSize: 12 }}>{card.label}</Text>
+            <Text style={{ color: card.tone, fontSize: 28, fontWeight: "700" }}>{card.value}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={{ flexDirection: "row", gap: 16, alignItems: "flex-start" }}>
+        <View style={{ ...CARD_STYLE, flex: 2 }}>
+          <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>Web admin quick guide</Text>
+          <Text style={{ color: "#AAB4D4" }}>1. 「イベント作成」で新規イベントを登録</Text>
+          <Text style={{ color: "#AAB4D4" }}>2. 「結果未精算イベント」で正解選択肢を登録</Text>
+          <Text style={{ color: "#AAB4D4" }}>3. 「登録者リスト」で demo/admin を含む利用者を確認</Text>
+          <Text style={{ color: "#AAB4D4" }}>4. `/admin` ルートをブラウザで直接開けば Web 管理画面として利用できます</Text>
+        </View>
+
+        <View style={{ ...CARD_STYLE, flex: 1 }}>
+          <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>Latest settled event</Text>
+          {latestSettledEvent ? (
+            <>
+              <Text style={{ color: "#F4F7FF" }}>{latestSettledEvent.title}</Text>
+              <Text style={{ color: "#AAB4D4" }}>status: {latestSettledEvent.status}</Text>
+              <Text style={{ color: "#AAB4D4" }}>resultAt: {latestSettledEvent.resultAt ?? "-"}</Text>
+            </>
+          ) : (
+            <Text style={{ color: "#AAB4D4" }}>まだ確定済みイベントはありません。</Text>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
   return (
-    <ScreenTemplate title="Admin">
+    <ScreenTemplate title={isWideLayout && isWebPlatform() ? "Web Admin Console" : "Admin"}>
       {!userId && <Text style={{ color: "#AAB4D4" }}>管理操作には x-user-id が必要です。</Text>}
       {!!error && <Text style={{ color: "#ff8f8f" }}>{error}</Text>}
       {!!message && <Text style={{ color: "#8fe6a4" }}>{message}</Text>}
+      {isWideLayout && isWebPlatform() && renderWebOverview()}
       {renderSectionButtons()}
       {activeSection === "create" && (
         <>
