@@ -62,6 +62,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
 export function adminMiddleware(req: Request, res: Response, next: NextFunction) {
   const authed = req as AuthedRequest;
+  if (env.authMode !== "mvp_header" && authed.authSource !== "jwt") {
+    return res.status(403).json({ message: "Admin API requires Bearer token in this auth mode" });
+  }
   if (authed.userRole !== "admin") {
     return res.status(403).json({ message: "Admin role required" });
   }

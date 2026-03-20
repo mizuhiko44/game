@@ -14,6 +14,7 @@ MVP構成:
 ## API base / 認証
 - すべての業務APIは `/api` 配下です。
 - 保護されたルートは `AUTH_MODE` に応じて `x-user-id` または `Authorization: Bearer <token>` を受け付けます。
+- ただし Admin API は権限分離のため、`jwt_transition` / `jwt_required` では `Authorization: Bearer <token>` 必須です。
 - 公開情報:
   - `GET /` : APIメタ情報
   - `GET /health` : ヘルスチェック
@@ -137,6 +138,7 @@ curl http://localhost:3000/api/votes/history \
 ### Mobile Admin UI (MVP)
 - `Admin` タブから未確定イベントを選択し、正解選択肢を指定して結果確定できます。
 - Admin API は `role=admin` のみ利用可能です。seed 済みの `usr_demo_1` は DB 上でも `role=admin` で作成されます。
+- Admin API は権限分離のため、`AUTH_MODE=jwt_transition` / `jwt_required` では `x-user-id` だけでは使えず Bearer token が必要です。
 - 結果確定後は `processedVoteCount`, `winnerCount`, `totalRewardPoints`, `rewardedItemUserCount` を確認できます。
 - admin 以外で `Admin` タブを開いた場合は、テスト手順を表示する案内画面が出ます。
 - mobile で Admin を試す最短手順は、backend で `npm run prisma:seed` 後に `DemoUser` でログインし、上部バーの `role: admin` / `x-user-id: usr_demo_1` を確認することです。

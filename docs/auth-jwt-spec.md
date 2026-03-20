@@ -52,6 +52,7 @@ Authorization: Bearer <access_token>
 
 ## 8. 権限制御
 - Admin API は `role=admin` 必須
+- `jwt_transition` / `jwt_required` では Admin API に `Authorization: Bearer <access_token>` を必須とし、`x-user-id` ヘッダーのみの利用は許可しない
 - 将来は policy/permission 単位に拡張可能な設計とする
 
 ## 9. 移行手順
