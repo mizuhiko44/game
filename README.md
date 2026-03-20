@@ -6,6 +6,7 @@ MVP構成:
 - `docs/mvp-design.md`: 設計仕様書
 - `docs/mobile-rollout-plan.md`: スマホ展開構想
 - `docs/web-mobile-foundation-plan.md`: Web / スマホ両対応の土台構想
+- `docs/ui-prototype-concept.md`: Web / スマホ UIプロトタイプ構想
 - `docs/staging-env-auth-plan.md`: staging + env分離 + 認証設計 実施計画
 - `docs/secondary-priority-plan.md`: 次点項目 構想・設計仕様書
 - `docs/auth-jwt-spec.md`: JWT認証 移行設計仕様書
