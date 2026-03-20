@@ -3,7 +3,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { ScreenTemplate } from "../components/ScreenTemplate";
 import { apiRequest } from "../lib/api";
 import { isWebPlatform } from "../lib/platform";
-import { AdminCreateEventPayload, AdminRegisteredUser, AdminSettleResponse, EventDetailPayload, EventItem } from "../lib/types";
+import { AdminCreateEventPayload, AdminMetricsPayload, AdminRegisteredUser, AdminSettleResponse, EventDetailPayload, EventItem } from "../lib/types";
 
 const INPUT_STYLE = { color: "white", borderWidth: 1, borderColor: "#2B3554", padding: 10, borderRadius: 8 } as const;
 const CARD_STYLE = { backgroundColor: "#141D34", borderRadius: 10, padding: 12, gap: 6 } as const;
@@ -12,7 +12,7 @@ const CATEGORIES: AdminCreateEventPayload["category"][] = ["sports", "economy", 
 const SECTION_BUTTON_STYLE = { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 } as const;
 const TABLE_ROW_STYLE = { flexDirection: "row", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#2B3554" } as const;
 
-type AdminSection = "create" | "pending" | "users";
+type AdminSection = "create" | "pending" | "users" | "metrics";
 
 function toLocalDateTimeValue(date: Date) {
   const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -24,6 +24,7 @@ export function AdminScreen({ userId, isWideLayout = false }: { userId?: string;
   const [registeredUsers, setRegisteredUsers] = useState<AdminRegisteredUser[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
   const [detail, setDetail] = useState<EventDetailPayload | null>(null);
+  const [metrics, setMetrics] = useState<AdminMetricsPayload | null>(null);
   const [winningOptionId, setWinningOptionId] = useState<string | undefined>();
   const [settleResult, setSettleResult] = useState<AdminSettleResponse | null>(null);
   const [eventType, setEventType] = useState<AdminCreateEventPayload["eventType"]>("global");
@@ -61,9 +62,16 @@ export function AdminScreen({ userId, isWideLayout = false }: { userId?: string;
     setWinningOptionId(payload.result?.winningOptionId ?? payload.options?.[0]?.id);
   };
 
+  const refreshMetrics = async () => {
+    if (!userId) return;
+    const payload = await apiRequest<AdminMetricsPayload>("/admin/metrics", { userId });
+    setMetrics(payload);
+  };
+
   useEffect(() => {
     refreshEvents().catch((e) => setError((e as Error).message));
     refreshUsers().catch((e) => setError((e as Error).message));
+    refreshMetrics().catch((e) => setError((e as Error).message));
   }, [userId]);
 
   useEffect(() => {
@@ -130,6 +138,7 @@ export function AdminScreen({ userId, isWideLayout = false }: { userId?: string;
         ["create", "イベント作成"],
         ["pending", "結果未精算イベント"],
         ["users", "登録者リスト（最大100人）"],
+        ["metrics", "メトリクス"],
       ] as const).map(([value, label]) => {
         const selected = activeSection === value;
         return (
@@ -236,6 +245,62 @@ export function AdminScreen({ userId, isWideLayout = false }: { userId?: string;
     </>
   );
 
+  const renderMetricsSection = () => (
+    <>
+      <Text style={{ color: "#F4F7FF", fontWeight: "700", marginTop: 20 }}>簡易メトリクス</Text>
+      {!metrics && <Text style={{ color: "#AAB4D4" }}>メトリクスを読み込み中です。</Text>}
+      {metrics && (
+        <View style={{ gap: 16 }}>
+          <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
+            {[
+              { label: "Requests", value: metrics.totals.requests, tone: "#5BA7FF" },
+              { label: "Errors", value: metrics.totals.errors, tone: "#FF8F8F" },
+              { label: "Avg latency(ms)", value: metrics.totals.avgLatencyMs, tone: "#8FE6A4" },
+            ].map((card) => (
+              <View key={card.label} style={{ ...CARD_STYLE, minWidth: 180, flex: 1 }}>
+                <Text style={{ color: "#AAB4D4" }}>{card.label}</Text>
+                <Text style={{ color: card.tone, fontSize: 28, fontWeight: "700" }}>{card.value}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={CARD_STYLE}>
+            <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>Snapshot</Text>
+            <Text style={{ color: "#AAB4D4" }}>monitoring enabled: {String(metrics.enabled)}</Text>
+            <Text style={{ color: "#AAB4D4" }}>appEnv: {metrics.appEnv}</Text>
+            <Text style={{ color: "#AAB4D4" }}>startedAt: {metrics.startedAt}</Text>
+            <Text style={{ color: "#AAB4D4" }}>generatedAt: {metrics.generatedAt}</Text>
+            <Text style={{ color: "#AAB4D4" }}>lastServerErrorAt: {metrics.totals.lastServerErrorAt ?? "-"}</Text>
+            <Pressable
+              onPress={() => refreshMetrics().catch((e) => setError((e as Error).message))}
+              style={{ backgroundColor: "#5BA7FF", padding: 12, borderRadius: 8, marginTop: 8 }}
+            >
+              <Text style={{ color: "#0B1020", textAlign: "center", fontWeight: "700" }}>再読み込み</Text>
+            </Pressable>
+          </View>
+
+          <View style={CARD_STYLE}>
+            <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>Route metrics</Text>
+            {metrics.routes.length === 0 && <Text style={{ color: "#AAB4D4" }}>まだメトリクスはありません。</Text>}
+            {metrics.routes.map((route) => (
+              <View key={`${route.method}-${route.path}`} style={{ borderBottomWidth: 1, borderBottomColor: "#2B3554", paddingBottom: 8, marginBottom: 8 }}>
+                <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>
+                  {route.method} {route.path}
+                </Text>
+                <Text style={{ color: "#AAB4D4" }}>
+                  count: {route.count} / errors: {route.errorCount} / avgLatencyMs: {route.avgLatencyMs}
+                </Text>
+                <Text style={{ color: "#AAB4D4" }}>
+                  lastStatusCode: {route.lastStatusCode} / lastSeenAt: {route.lastSeenAt}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+    </>
+  );
+
   const renderWebOverview = () => (
     <View style={{ gap: 16, marginBottom: 20 }}>
       <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
@@ -336,6 +401,7 @@ export function AdminScreen({ userId, isWideLayout = false }: { userId?: string;
       )}
       {activeSection === "pending" && renderPendingSection()}
       {activeSection === "users" && renderUsersSection()}
+      {activeSection === "metrics" && renderMetricsSection()}
     </ScreenTemplate>
   );
 }

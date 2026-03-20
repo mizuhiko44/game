@@ -185,3 +185,26 @@ export type AdminSettleResponse = {
   totalRewardPoints: number;
   rewardedItemUserCount: number;
 };
+
+export type AdminMetricsPayload = {
+  enabled: boolean;
+  appEnv: string;
+  startedAt: string;
+  generatedAt: string;
+  totals: {
+    requests: number;
+    errors: number;
+    avgLatencyMs: number;
+    lastServerErrorAt: string | null;
+  };
+  routes: Array<{
+    method: string;
+    path: string;
+    count: number;
+    errorCount: number;
+    totalLatencyMs: number;
+    avgLatencyMs: number;
+    lastStatusCode: number;
+    lastSeenAt: string;
+  }>;
+};
