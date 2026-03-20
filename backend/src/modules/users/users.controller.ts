@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { issueAuthTokensForUser, serializeUser } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
@@ -14,15 +15,23 @@ const loginSchema = z.object({
   nickname: z.string().trim().min(1).max(24),
 });
 
+type UserLookupClient = Pick<PrismaClient, "user"> | Prisma.TransactionClient;
+
+async function findUserByNicknameInsensitive(client: UserLookupClient, nickname: string) {
+  return client.user.findFirst({
+    where: {
+      nickname: {
+        equals: nickname.trim(),
+        mode: "insensitive",
+      },
+    },
+  });
+}
+
 export async function onboarding(req: Request, res: Response) {
   const parsed = onboardingSchema.parse(req.body);
-  const normalizedNickname = parsed.nickname.trim().toLowerCase();
-
-  const existingUsers = await prisma.user.findMany({
-    select: { nickname: true },
-  });
-  const duplicateExists = existingUsers.some((user) => user.nickname.trim().toLowerCase() === normalizedNickname);
-  if (duplicateExists) throw new HttpError(409, "nickname already exists");
+  const duplicateUser = await findUserByNicknameInsensitive(prisma, parsed.nickname);
+  if (duplicateUser) throw new HttpError(409, "nickname already exists");
 
   const payload = await prisma.$transaction(async (tx) => {
     const created = await tx.user.create({
@@ -58,10 +67,7 @@ export async function onboarding(req: Request, res: Response) {
 
 export async function login(req: Request, res: Response) {
   const parsed = loginSchema.parse(req.body);
-  const normalizedNickname = parsed.nickname.trim().toLowerCase();
-
-  const users = await prisma.user.findMany();
-  const user = users.find((row) => row.nickname.trim().toLowerCase() === normalizedNickname);
+  const user = await findUserByNicknameInsensitive(prisma, parsed.nickname);
   if (!user) throw new HttpError(404, "user not found");
 
   return res.json(await issueAuthTokensForUser(user));
