@@ -1,10 +1,14 @@
 import { EventStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 
-async function finalizeReadyEvent(tx: Prisma.TransactionClient, eventId: string) {
+type EventWithWinningResult = Prisma.EventGetPayload<{
+  include: { result: { include: { winningOption: true } } };
+}>;
+
+async function finalizeReadyEvent(tx: Prisma.TransactionClient, eventId: string): Promise<EventWithWinningResult | null> {
   const event = await tx.event.findUnique({
     where: { id: eventId },
-    include: { result: true },
+    include: { result: { include: { winningOption: true } } },
   });
 
   if (!event || !event.result || event.status === "settled") {
@@ -54,7 +58,11 @@ async function finalizeReadyEvent(tx: Prisma.TransactionClient, eventId: string)
     }
   }
 
-  return tx.event.update({ where: { id: eventId }, data: { status: "settled" } });
+  return tx.event.update({
+    where: { id: eventId },
+    data: { status: "settled" },
+    include: { result: { include: { winningOption: true } } },
+  });
 }
 
 export async function syncEventLifecycleInTx(tx: Prisma.TransactionClient, eventId: string, now = new Date()) {
