@@ -4,6 +4,7 @@ import express from "express";
 import router from "./routes";
 import { errorMiddleware } from "./middlewares/error";
 import { logger } from "./lib/logger";
+import { recordRequestMetric } from "./lib/monitoring";
 import { env } from "./config/env";
 
 export const app = express();
@@ -16,6 +17,7 @@ const routeSummary = {
     "GET /api/events",
     "POST /api/admin/events",
     "GET /api/admin/users",
+    "GET /api/admin/metrics",
     "GET /api/events/:eventId",
     "GET /api/events/:eventId/participants",
     "POST /api/votes",
@@ -47,6 +49,12 @@ app.use((req, res, next) => {
   res.setHeader("x-request-id", requestId);
   res.on("finish", () => {
     const elapsedMs = Number(process.hrtime.bigint() - startAt) / 1_000_000;
+    recordRequestMetric({
+      method: req.method,
+      path: req.originalUrl.split("?")[0],
+      statusCode: res.statusCode,
+      elapsedMs,
+    });
     logger.info(`${req.method} ${req.originalUrl} -> ${res.statusCode}`, { elapsedMs: Number(elapsedMs.toFixed(1)), requestId });
   });
   next();

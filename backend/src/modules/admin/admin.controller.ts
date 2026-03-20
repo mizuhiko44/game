@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod";
+import { getMonitoringSnapshot } from "../../lib/monitoring";
 import { prisma } from "../../lib/prisma";
 import { HttpError } from "../../middlewares/error";
 import { syncEventLifecycleInTx } from "../events/event-lifecycle";
@@ -73,4 +74,8 @@ export async function settleEvent(req: Request, res: Response) {
   });
 
   return res.json(result);
+}
+
+export function getAdminMetrics(_req: Request, res: Response) {
+  return res.json(getMonitoringSnapshot());
 }

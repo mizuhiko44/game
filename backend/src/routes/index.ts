@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { adminMiddleware, authMiddleware } from "../middlewares/auth";
 import { logout, getAuthMe, refreshAuthToken } from "../modules/auth/auth.controller";
-import { settleEvent } from "../modules/admin/admin.controller";
+import { getAdminMetrics, settleEvent } from "../modules/admin/admin.controller";
 import { getAvatar, levelUpAvatar } from "../modules/avatar/avatar.controller";
 import { createEvent, getEventDetail, listEventParticipants, listEvents } from "../modules/events/events.controller";
 import { getHome } from "../modules/home/home.controller";
@@ -34,6 +34,7 @@ router.get("/me", getMe);
 router.use("/admin", adminMiddleware);
 router.post("/admin/events", createEvent);
 router.get("/admin/users", listRegisteredUsers);
+router.get("/admin/metrics", getAdminMetrics);
 router.post("/admin/events/settle", settleEvent);
 
 export default router;

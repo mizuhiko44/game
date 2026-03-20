@@ -80,6 +80,7 @@ npm run dev
 - request / warn / error は `backend/logs/app.log` に保存されます。
 - error レベルは `backend/logs/error.log` にも保存されます。
 - 保存先は `.env` の `LOG_DIR` で変更できます。
+- `GET /api/admin/metrics` で簡易メトリクス（総リクエスト数、エラー数、平均応答時間、ルート別統計）を確認できます。
 
 ## Minimum API smoke test
 - `backend/scripts/api-smoke-test.sh` を追加しました。
