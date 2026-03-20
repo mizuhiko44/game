@@ -18,11 +18,13 @@
 管理者相当の利用者はイベントを作成し、正解選択肢を事前登録できます。イベントは締切時刻・結果時刻に応じて自動的に状態遷移し、結果精算が行われます。
 
 ### 2.2 MVPの特徴
-- 認証は `x-user-id` ヘッダーを使う簡易方式
+- 認証は `AUTH_MODE` に応じて `x-user-id` ヘッダーまたは Bearer JWT を利用
 - イベントは `global` / `local` をサポート
 - 投票は「1ユーザー × 1イベント = 1回」のみ
 - 正解時の報酬は固定倍率（MVPでは `inputBetPoints * 2`）
 - 管理画面から正解選択肢を事前登録可能
+- Home で直近の結果通知を表示
+- Admin で簡易メトリクスと Web コンソール表示をサポート
 - `voteEndAt` / `resultAt` に基づく自動状態更新を実装
 - アバターのパッシブ効果と育成アイテム利用を実装
 
@@ -72,14 +74,19 @@ docs/
 
 ## 4. 認証・権限制御
 
-### 4.1 認証方式（MVP）
-- 保護APIは `x-user-id` ヘッダー必須
-- ヘッダー値に対応する `users.id` を認証済みユーザーとして扱う
+### 4.1 認証方式
+`AUTH_MODE` により認証方式を切り替えます。
+- `mvp_header`: 保護APIは `x-user-id` ヘッダー必須
+- `jwt_transition`: Bearer token を優先しつつ、一般APIのみ `x-user-id` との併用を許可
+- `jwt_required`: 保護APIは Bearer JWT 必須
+
+ログイン/認証APIでは access token / refresh token を返却し、refresh token は `AuthSession` にハッシュ保存して失効管理します。
 
 ### 4.2 権限制御の現状
-- 管理APIもMVPでは同じ `x-user-id` ベースで利用可能
-- **管理者権限の厳密な分離は未実装**
-- 将来的には JWT + role/permission に置換予定
+- 一般保護APIは `authMiddleware` により認証済みユーザーのみ利用可能
+- Admin API は `adminMiddleware` により `role=admin` を必須化
+- `jwt_transition` / `jwt_required` では Admin API に Bearer token を必須化し、`x-user-id` のみでの管理操作は不可
+- 権限制御は role ベースまで実装済みで、policy/permission 単位の細分化は未実装
 
 ---
 
@@ -254,11 +261,16 @@ actualConsumedPoints = max(1, actualConsumedPoints)
 ### 9.1 公開API
 - `POST /api/users/onboarding`
 - `POST /api/users/login`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
 - `GET /`
 - `GET /health`
 - `GET /api`
+- `GET /api/config`
 
 ### 9.2 保護API
+- `GET /api/auth/me`
+- `POST /api/auth/logout`
 - `GET /api/home`
 - `GET /api/events`
 - `GET /api/events/:eventId`
@@ -270,6 +282,7 @@ actualConsumedPoints = max(1, actualConsumedPoints)
 - `POST /api/avatar/level-up`
 - `GET /api/me`
 - `GET /api/admin/users`
+- `GET /api/admin/metrics`
 - `POST /api/admin/events`
 - `POST /api/admin/events/settle`
 
@@ -318,6 +331,7 @@ actualConsumedPoints = max(1, actualConsumedPoints)
 - おすすめイベント
 - 締切が近いイベント
 - 精算済みイベント
+- 直近の投票結果通知（的中/不的中メッセージ）
 
 ### 10.3 EventList
 - openイベント一覧を表示
@@ -355,6 +369,8 @@ actualConsumedPoints = max(1, actualConsumedPoints)
 - 未精算イベント選択
 - 正解選択肢登録
 - 自動精算結果サマリー確認
+- 管理メトリクス表示
+- Web レイアウト時の簡易管理コンソール表示
 
 ---
 
@@ -403,12 +419,11 @@ actualConsumedPoints = max(1, actualConsumedPoints)
 
 ### 13.3 拡張性
 将来の拡張候補:
-- JWT認証
-- 管理者ロール分離
-- Web管理画面
+- policy/permission ベースの詳細権限制御
 - ランキング/オッズ導入
-- 通知機能
-- 本番向け監視・トレーシング
+- Push通知・メール通知などの外部通知
+- 本番向け監視・トレーシング連携
+- バックグラウンドジョブ基盤
 
 ---
 
@@ -416,25 +431,26 @@ actualConsumedPoints = max(1, actualConsumedPoints)
 - 課金機能
 - コメント機能
 - フレンド機能
-- 厳密な権限管理
+- policy/permission ベースの厳密な権限制御
 - リアルタイム通知
 - 高度なランキング/レコメンド
 
 ---
 
 ## 15. 現時点の制約・既知課題
-- 管理者認可は未実装
-- 自動テストは未整備で、手動確認中心
+- Bearer JWT は実装済みだが、mobile の secure storage や cookie ベース運用など本番クライアント実装は未完了
+- 自動テストは CI 上の backend smoke test / mobile typecheck 中心で、E2E は未整備
 - mobileの表示はMVP水準であり、UI/UXの改善余地あり
-- 結果確定通知やバックグラウンドジョブ基盤は未実装
+- 通知は Home 画面の結果通知までで、Push通知やバックグラウンドジョブ基盤は未実装
+- 監視は簡易メトリクスまでで、外部監視SaaS連携やアラート運用は未実装
 - 単一サーバー前提のため、大規模運用向けの分散設計は未対応
 
 ---
 
 ## 16. 今後の改善候補
 1. API統合テスト・E2Eテスト追加
-2. 管理者権限分離
-3. イベント結果通知の導入
+2. JWT 本番運用（secure storage / cookie / 鍵ローテーション）
+3. Push通知や非同期ジョブによるイベント結果通知の導入
 4. Home/Result UX改善
-5. 分析用メトリクス・監視基盤追加
-6. Webベース管理画面の追加
+5. 外部監視・アラート基盤追加
+6. Web管理画面の操作性改善

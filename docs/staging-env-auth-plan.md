@@ -12,15 +12,22 @@
 ---
 
 ## 1.5 完了判定
-現時点では **完了ではなく、土台追加まで完了** です。
+現時点では **一部完了（基盤 + JWT最小実装まで完了）** です。
 
-完了とみなす条件は以下です。
+すでに完了している内容:
+- env の型付き管理と local / staging / production 想定の整理
+- access token / refresh token API の追加
+- refresh token のハッシュ保存と revoke / rotate の基本フロー
+- `role=admin` を用いた Admin API 制御
+- onboarding / vote / auto settle / admin result registration / avatar level-up を通す backend smoke test と mobile CI
+
+なお、最終完了とみなす条件は以下です。
 - staging backend が実際に公開されている
 - mobile / web が staging に接続して確認できる
-- 認証方式（JWT移行方針・role設計・token保存方式）が文書だけでなく API仕様として確定している
-- onboarding / vote / auto settle / admin result registration / avatar level-up の最低限APIテストが通る
+- mobile / web クライアントが JWT を本番想定の保存方式で利用できる
+- 監視・通知運用が staging 以上で確認できる
 
-したがって、今回の状態は「最優先事項の着手完了・基盤準備完了」であり、「最優先事項の完了」ではありません。
+したがって、今回の状態は「最優先事項の着手完了・基盤準備完了」より進んでいますが、「staging/prod 運用完了」ではありません。
 
 ---
 
@@ -79,20 +86,23 @@ mobile では以下を公開環境変数で扱います。
 
 ## 4. 実装ポリシー
 
-### 4.1 今回のコード化範囲
-今回は **JWT認証そのものの実装までは行わず**、以下の土台を入れます。
+### 4.1 現在までのコード化範囲
+現在は土台だけでなく、**JWT認証の最小実装まで完了** しています。
 - env の型付き管理
 - auth mode の宣言
 - mobile 側 env 管理
 - session storage key の環境分離
 - backend の public config / route summary で運用モードを可視化
+- login / refresh / logout / auth me API の追加
+- refresh token の session 管理と revoke / rotate
+- admin role チェックと Admin API の Bearer token 必須化
 
 ### 4.2 次フェーズで実装するもの
-- user schema 拡張（email / role / auth provider 等）
-- access token / refresh token API
-- secure storage 対応
-- auth middleware の JWT 化
-- admin role チェック
+- user schema 拡張（email / auth provider 等の本番向け属性）
+- secure storage / secure cookie 対応
+- mobile / web クライアントの JWT デフォルト運用化
+- JWT 秘密鍵ローテーションや失効運用の強化
+- 外部監視・通知との連携
 
 ### 4.3 今回の追加物
 - `backend/.env.staging.example`
@@ -105,8 +115,8 @@ mobile では以下を公開環境変数で扱います。
 
 ## 5. 優先タスク
 1. backend staging デプロイ
-2. mobile の env 切替整理
-3. JWT設計書の詳細化
-4. auth API の追加
-5. Admin 権限分離
-6. staging での実機確認
+2. mobile / web の JWT デフォルト運用化
+3. secure storage / secure cookie 方針の実装
+4. 監視・通知の staging 接続
+5. staging での実機確認
+6. production 向け鍵管理・失効運用の整備

@@ -36,6 +36,12 @@
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 
+### 現在の認証挙動
+- `POST /api/users/login` と `POST /api/auth/login` は同じログイン処理を利用し、JWT を返却する
+- `mvp_header` では一般保護APIは `x-user-id` 必須
+- `jwt_transition` では一般保護APIは `x-user-id` と Bearer token を併用可能
+- `jwt_transition` / `jwt_required` の Admin API は Bearer token + `role=admin` を必須とする
+
 ### Authorization Header
 ```txt
 Authorization: Bearer <access_token>
