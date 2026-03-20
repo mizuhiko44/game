@@ -3,6 +3,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { ScreenTemplate } from "../components/ScreenTemplate";
 import { apiRequest } from "../lib/api";
 import { EventItem, VoteCreateResponse } from "../lib/types";
+import { useAppState } from "../state/AppState";
 
 const INPUT_STYLE = { color: "white", borderWidth: 1, borderColor: "#2B3554", padding: 10, borderRadius: 8 } as const;
 const CARD_STYLE = { backgroundColor: "#141D34", borderRadius: 10, padding: 12, gap: 6 } as const;
@@ -13,6 +14,7 @@ export function VoteScreen({ userId, onComplete }: { userId?: string; onComplete
   const [optionId, setOptionId] = useState("");
   const [betPoints, setBetPoints] = useState("100");
   const [message, setMessage] = useState("");
+  const { selectedEventId } = useAppState();
 
   const refreshEvents = async () => {
     if (!userId) return;
@@ -36,12 +38,12 @@ export function VoteScreen({ userId, onComplete }: { userId?: string; onComplete
       return;
     }
 
-    const selectedEvent = rankedEvents.find((event) => event.id === eventId) ?? rankedEvents[0];
+    const selectedEvent = rankedEvents.find((event) => event.id === eventId) ?? rankedEvents.find((event) => event.id === selectedEventId) ?? rankedEvents[0];
     setEventId(selectedEvent.id);
 
     const selectedOption = selectedEvent.options?.find((option) => option.id === optionId) ?? selectedEvent.options?.[0];
     setOptionId(selectedOption?.id ?? "");
-  }, [rankedEvents, eventId, optionId]);
+  }, [rankedEvents, eventId, optionId, selectedEventId]);
 
   const currentEvent = useMemo(() => rankedEvents.find((event) => event.id === eventId), [rankedEvents, eventId]);
   const currentOptions = currentEvent?.options ?? [];
@@ -71,6 +73,7 @@ export function VoteScreen({ userId, onComplete }: { userId?: string; onComplete
     <ScreenTemplate title="Vote">
       {!userId && <Text style={{ color: "#AAB4D4" }}>x-user-id が必要です。</Text>}
       <Text style={{ color: "#AAB4D4" }}>open events: {rankedEvents.length}</Text>
+      {!!selectedEventId && !!currentEvent && <Text style={{ color: "#5BA7FF", fontWeight: "700" }}>EventDetail から選択されたイベントを優先表示しています。</Text>}
       {!rankedEvents.length && <Text style={{ color: "#AAB4D4" }}>投票可能な open イベントはありません。</Text>}
 
       {!!rankedEvents.length && (

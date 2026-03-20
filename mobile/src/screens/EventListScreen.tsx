@@ -4,6 +4,7 @@ import { ScreenTemplate } from "../components/ScreenTemplate";
 import { apiRequest } from "../lib/api";
 import { EventItem, EventParticipantsPayload } from "../lib/types";
 import { isWebPlatform, isWideLayout } from "../lib/platform";
+import { useAppState } from "../state/AppState";
 import { colors } from "../theme/colors";
 
 function formatRemaining(targetAt?: string, nowMs = Date.now()) {
@@ -43,6 +44,7 @@ export function EventListScreen({ userId, onSelectEvent }: { userId?: string; on
   const [typeFilter, setTypeFilter] = useState<EventTypeFilter>("all");
   const { width } = useWindowDimensions();
   const wideWeb = isWebPlatform() && isWideLayout(width);
+  const { user, setTab, setSelectedEventId } = useAppState();
 
   useEffect(() => {
     if (!userId) return;
@@ -78,8 +80,8 @@ export function EventListScreen({ userId, onSelectEvent }: { userId?: string; on
     [expandedEventId, filteredEvents]
   );
 
-  const ensureParticipantsLoaded = async (eventId: string) => {
-    if (!userId || participantsByEvent[eventId]) return;
+  const ensureParticipantsLoaded = async (eventId: string, force = false) => {
+    if (!userId || (!force && participantsByEvent[eventId])) return;
     try {
       setLoadingEventId(eventId);
       const payload = await apiRequest<EventParticipantsPayload>(`/events/${eventId}/participants`, { userId });
@@ -198,10 +200,18 @@ export function EventListScreen({ userId, onSelectEvent }: { userId?: string; on
               })}
             </View>
 
-            <View style={{ flex: 0.95, gap: 12 }}>
-              {!activeEvent && <Text style={{ color: colors.subText }}>表示対象イベントがありません。</Text>}
+            <View style={{ flex: 0.95, gap: 12, alignItems: "flex-end" }}>
+              {!!user?.id && (
+                <View style={{ borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: "#10182E", borderWidth: 1, borderColor: "#22304F", maxWidth: 260, alignSelf: "flex-end" }}>
+                  <Text style={{ color: colors.subText, fontSize: 10, textTransform: "uppercase" }}>Current session</Text>
+                  <Text style={{ color: colors.text, fontSize: 12 }}>nickname: {user.nickname}</Text>
+                  <Text style={{ color: colors.text, fontSize: 12 }}>role: {user.role}</Text>
+                  <Text style={{ color: colors.subText, fontSize: 11 }}>x-user-id: {user.id}</Text>
+                </View>
+              )}
+              {!activeEvent && <Text style={{ color: colors.subText, alignSelf: "stretch" }}>表示対象イベントがありません。</Text>}
               {activeEvent && (
-                <View style={{ ...CARD_STYLE, padding: 20 }}>
+                <View style={{ ...CARD_STYLE, padding: 20, alignSelf: "stretch" }}>
                   <Text style={{ color: colors.text, fontSize: 22, fontWeight: "800" }}>{activeEvent.title}</Text>
                   <Text style={{ color: colors.subText }}>{activeEvent.description ?? "説明なし"}</Text>
                   <View style={{ gap: 4, marginTop: 4 }}>
@@ -225,7 +235,10 @@ export function EventListScreen({ userId, onSelectEvent }: { userId?: string; on
                     <Pressable onPress={() => onSelectEvent?.(activeEvent.id)} style={{ backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }}>
                       <Text style={{ color: colors.bg, fontWeight: "700" }}>詳細を見る</Text>
                     </Pressable>
-                    <Pressable onPress={() => ensureParticipantsLoaded(activeEvent.id)} style={{ backgroundColor: "#10182E", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: "#2B3554" }}>
+                    <Pressable onPress={() => { setSelectedEventId(activeEvent.id); setTab("Vote"); }} style={{ backgroundColor: "#1B335B", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }}>
+                      <Text style={{ color: colors.text, fontWeight: "700" }}>Vote へ</Text>
+                    </Pressable>
+                    <Pressable onPress={() => ensureParticipantsLoaded(activeEvent.id, true)} style={{ backgroundColor: "#10182E", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: "#2B3554" }}>
                       <Text style={{ color: colors.text, fontWeight: "700" }}>参加者を更新</Text>
                     </Pressable>
                   </View>

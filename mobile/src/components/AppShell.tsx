@@ -9,7 +9,7 @@ type AppShellProps = PropsWithChildren<{
   onLogout?: () => void | Promise<void>;
 }>;
 
-const HIDDEN_WIDE_TABS = new Set<Tab>(["Onboarding", "EventDetail", "VoteComplete", "ResultDetail"]);
+const HIDDEN_WIDE_TABS = new Set<Tab>(["Onboarding", "Vote", "EventDetail", "VoteComplete", "ResultDetail"]);
 
 export function AppShell({ onLogout, children }: AppShellProps) {
   const { width } = useWindowDimensions();
@@ -43,17 +43,13 @@ export function AppShell({ onLogout, children }: AppShellProps) {
             </View>
           </View>
 
-          <View style={styles.profileCard}>
-            <Text style={styles.profileHeading}>Current session</Text>
-            <Text style={styles.profileText}>nickname: {user?.nickname ?? "(未登録)"}</Text>
-            <Text style={styles.profileText}>role: {user?.role ?? "guest"}</Text>
-            <Text style={styles.profileText}>x-user-id: {user?.id ?? "(未登録)"}</Text>
-            {!!user?.id && (
-              <Pressable onPress={onLogout} style={styles.logoutButton}>
-                <Text style={styles.logoutButtonText}>ログアウト</Text>
-              </Pressable>
-            )}
-          </View>
+          {!!user?.id && (
+            <Pressable onPress={() => setTab("Vote")} style={styles.voteSpotlight}>
+              <Text style={styles.voteSpotlightEyebrow}>Quick action</Text>
+              <Text style={styles.voteSpotlightTitle}>Vote</Text>
+              <Text style={styles.voteSpotlightText}>空いたスペースを使って、左帯からすぐ投票へ入れる目立つ導線にしました。</Text>
+            </Pressable>
+          )}
 
           <View style={styles.navGroup}>
             {visibleTabs.map((entry) => {
@@ -68,9 +64,14 @@ export function AppShell({ onLogout, children }: AppShellProps) {
           </View>
 
           <View style={styles.sidebarFooter}>
+            {!!user?.id && (
+              <Pressable onPress={onLogout} style={styles.footerLogoutButton}>
+                <Text style={styles.footerLogoutText}>ログアウト</Text>
+              </Pressable>
+            )}
             <Text style={styles.sidebarFooterTitle}>Prototype focus</Text>
-            <Text style={styles.sidebarFooterText}>・Home をダッシュボード化</Text>
-            <Text style={styles.sidebarFooterText}>・Events を一覧 + プレビュー化</Text>
+            <Text style={styles.sidebarFooterText}>・Vote を左帯の目立つCTAへ移動</Text>
+            <Text style={styles.sidebarFooterText}>・Events は右側で詳細比較</Text>
             <Text style={styles.sidebarFooterText}>・Admin を Web console として活用</Text>
           </View>
         </View>
@@ -112,18 +113,19 @@ const styles = StyleSheet.create({
   metaChip: { borderWidth: 1, borderColor: "#2B3554", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#141D34" },
   metaChipLabel: { color: "#7F8DB6", fontSize: 10, textTransform: "uppercase" },
   metaChipValue: { color: colors.text, fontSize: 12, fontWeight: "700" },
-  profileCard: { backgroundColor: "#141D34", borderRadius: 16, padding: 14, gap: 6, borderWidth: 1, borderColor: "#22304F" },
-  profileHeading: { color: colors.text, fontSize: 14, fontWeight: "700", marginBottom: 4 },
-  profileText: { color: colors.subText, fontSize: 12 },
-  logoutButton: { marginTop: 8, backgroundColor: colors.accent, borderRadius: 999, paddingVertical: 10, alignItems: "center" },
-  logoutButtonText: { color: colors.bg, fontWeight: "700" },
+  voteSpotlight: { backgroundColor: colors.accent, borderRadius: 22, padding: 18, gap: 6, shadowColor: colors.accent, shadowOpacity: 0.28, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
+  voteSpotlightEyebrow: { color: "#17305D", fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
+  voteSpotlightTitle: { color: colors.bg, fontSize: 26, fontWeight: "800" },
+  voteSpotlightText: { color: "#17305D", lineHeight: 18, fontWeight: "600" },
   navGroup: { gap: 8, flex: 1 },
   sidebarTab: { borderRadius: 14, borderWidth: 1, borderColor: "#2B3554", padding: 14, gap: 4, backgroundColor: "#121A30" },
   sidebarTabActive: { borderColor: colors.accent, backgroundColor: "#192443" },
   sidebarTabText: { color: colors.text, fontWeight: "700", fontSize: 15 },
   sidebarTabTextActive: { color: colors.accent },
   sidebarSectionText: { color: "#7F8DB6", fontSize: 11, textTransform: "uppercase" },
-  sidebarFooter: { borderTopWidth: 1, borderTopColor: "#1F2A45", paddingTop: 12, gap: 4 },
+  sidebarFooter: { borderTopWidth: 1, borderTopColor: "#1F2A45", paddingTop: 12, gap: 6 },
+  footerLogoutButton: { alignSelf: "flex-start", backgroundColor: "#141D34", borderRadius: 999, borderWidth: 1, borderColor: "#2B3554", paddingHorizontal: 12, paddingVertical: 8 },
+  footerLogoutText: { color: colors.text, fontWeight: "700", fontSize: 12 },
   sidebarFooterTitle: { color: colors.text, fontWeight: "700" },
   sidebarFooterText: { color: colors.subText, fontSize: 12 },
   desktopContent: { flex: 1 },
