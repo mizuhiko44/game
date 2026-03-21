@@ -2,6 +2,7 @@
   "expo": {
     "name": "prediction-game-mobile",
     "slug": "prediction-game-mobile",
+    "plugins": ["expo-router"],
     "web": {
       "output": "static"
     }
