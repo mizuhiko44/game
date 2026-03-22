@@ -9,6 +9,27 @@ import { env } from "./config/env";
 
 export const app = express();
 
+function normalizeOrigin(origin: string) {
+  return origin.endsWith("/") ? origin.slice(0, -1) : origin;
+}
+
+function isAllowedOrigin(origin: string, allowedOrigins: string[]) {
+  const normalizedOrigin = normalizeOrigin(origin);
+
+  return allowedOrigins.some((entry) => {
+    const normalizedEntry = normalizeOrigin(entry);
+    if (normalizedEntry === "*") return true;
+    if (!normalizedEntry.includes("*")) return normalizedEntry === normalizedOrigin;
+
+    const pattern = normalizedEntry
+      .split("*")
+      .map((segment) => segment.replace(/[|\{}()[\]^$+?.]/g, "\\$&"))
+      .join(".*");
+
+    return new RegExp(`^${pattern}$`).test(normalizedOrigin);
+  });
+}
+
 const routeSummary = {
   appEnv: env.appEnv,
   public: ["GET /", "GET /health", "GET /api", "GET /api/config", "POST /api/users/onboarding", "POST /api/users/login", "POST /api/auth/login", "POST /api/auth/refresh"],
@@ -39,7 +60,14 @@ const routeSummary = {
 
 app.use(
   cors({
-    origin: env.corsOrigins.includes("*") ? true : env.corsOrigins,
+    origin(origin, callback) {
+      if (!origin || isAllowedOrigin(origin, env.corsOrigins)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} is not allowed by CORS`));
+    },
   })
 );
 app.use(express.json());

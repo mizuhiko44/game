@@ -36,6 +36,7 @@ MVP構成:
 
 ## Environment separation / auth groundwork
 - backend は `APP_ENV`, `PUBLIC_APP_URL`, `CORS_ORIGINS`, `AUTH_MODE`, `JWT_*` を使って local / staging / production を分離できる前提にしました。
+- `CORS_ORIGINS` はカンマ区切りで複数 origin を指定でき、末尾 `/` は避けてください。`https://*.vercel.app` のようなワイルドカードも利用できます。
 - `backend/.env.staging.example` と `mobile/.env.staging.example` を追加し、staging 用の設定雛形を用意しました。
 - mobile は `EXPO_PUBLIC_APP_ENV`, `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_AUTH_MODE` を使って接続先と認証モードを切り替えられます。
 - `AUTH_MODE` は `mvp_header`, `jwt_transition`, `jwt_required` の3段階を想定しています。
