@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "prediction-game-mobile",
+    "slug": "prediction-game-mobile",
+    "version": "0.1.0",
+    "platforms": ["ios", "android", "web"],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    }
+  }
+}
