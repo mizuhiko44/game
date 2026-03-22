@@ -27,8 +27,46 @@
 - Admin の wide layout 最適化
 - monitoring フックの追加
 
+ただし、Voteブランチの現状は途中段階です。
+- Vercel での静的配備は確認済み
+- Expo Router ベースの Web エントリは作成済み
+- Web で表示される内容は現在プレースホルダー文字列のみ
+- `mobile/App.tsx` に残る既存MVP UI を Router 配下へ戻し切れていない
+
+
+## 2.6 イテレーション2の開始条件と目的
+イテレーション2では、**「デプロイできるがUIは未復旧」状態から、WebでMVP画面が正しく見える状態へ戻す** ことを最優先にします。
+
+最上位ゴール:
+- Vercel 配備を維持したまま、Home / Events / Vote / History / Results / Avatar / My Page / Admin の既存UI資産を再接続する
+- 少なくともトップ導線と主要画面が「文字列だけ」ではなくコンポーネントとして正常描画される状態にする
+- 旧 `App.tsx` 主導構成と Expo Router 主導構成の責務分担を明確化する
+
 ---
 
+## 2.7 イテレーション2の作業項目
+### Task 1. 画面復旧方針の確定
+- `mobile/App.tsx` を Router 配下から呼び出す暫定構成にするか
+- もしくは `src/screens/*` を `app/` 配下へ段階移植するか
+- まずは最短で UI を復旧できる案を採用する
+
+### Task 2. ルーティングと状態管理の接続見直し
+- `expo-router` の route と既存 `tab` / `selectedEventId` / `selectedResult` の対応表を作る
+- AppState の責務と Router の責務を分離する
+- `mobile/App.tsx` に残る bootstrap / session / logout の処理を再利用可能な単位へ寄せる
+
+### Task 3. 最低限の Web 表示完了条件
+- Home 画面が Web で表示できる
+- Events 一覧と Event Detail の遷移が成立する
+- Vote 完了までの主要導線が少なくとも開発環境で確認できる
+- Admin は閲覧または簡易導線まで復旧する
+
+### Task 4. 配備確認の継続
+- `npx expo export --platform web` の成功を維持する
+- Vercel 配備後も白画面ではなく UI が表示されることを確認する
+- 必要に応じて静的配備向け設定差分を文書化する
+
+---
 ## 3. Web URL ルーティング
 
 ### 3.1 目的
@@ -161,10 +199,11 @@
 ---
 
 ## 7. 推奨実施順序
-1. Web URL ルーティング
-2. グローバル状態管理
-3. Admin の Web 最適化
-4. Sentry / 監視導入
+1. イテレーション2: Web UI 復旧と Router 再接続
+2. Web URL ルーティングの本格化
+3. グローバル状態管理の整理
+4. Admin の Web 最適化
+5. Sentry / 監視導入
 
 ### 理由
 - URL routing と state 管理は Web UX の基盤
@@ -176,15 +215,20 @@
 ## 8. 次フェーズの実装単位案
 
 ### Phase A
+- Web UI 復旧
+- `App.tsx` と `app/` の接続方針確定
+- Home / Events / Vote の最短復旧
+
+### Phase B
 - URL routing
 - Config / Auth store
 - selected event / result state 移管
 
-### Phase B
+### Phase C
 - Admin web layout 最適化
 - table / filter / sort 追加
 
-### Phase C
+### Phase D
 - Sentry / monitoring
 - request-id / release version / env tagging
 
