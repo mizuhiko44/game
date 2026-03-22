@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "prediction-game-mobile",
+    "slug": "prediction-game-mobile",
+    "web": {
+      "output": "static"
+    }
+  }
+}

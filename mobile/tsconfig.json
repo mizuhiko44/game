@@ -4,10 +4,19 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
-    "lib": ["ES2020", "DOM"],
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
     "strict": false,
     "skipLibCheck": true,
-    "types": ["react"]
+    "types": [
+      "react"
+    ]
   },
-  "include": ["./**/*.ts", "./**/*.tsx"]
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "extends": "expo/tsconfig.base"
 }
