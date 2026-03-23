@@ -20,15 +20,26 @@
 
 ---
 
-## 2.5 現在の着手状況
-今回、次点項目については以下の土台コードを先行追加します。
-- Web URL ルーティングの基本同期
-- AppState Context によるグローバル状態管理の土台
-- Admin の wide layout 最適化
-- monitoring フックの追加
+## 2.5 イテレーション2 完了サマリー
+イテレーション2では、当初の「デプロイはできるが UI は未復旧」状態から、以下までを完了しました。
+- Expo Router の Web 入口から `App.tsx` を再利用し、主要MVP画面を Web で表示可能にした
+- Vercel / Render 間の接続を見直し、Web から backend API へ接続できる状態へ復旧した
+- onboarding / login / admin / vote / results の主要導線を確認した
+- CORS preview origin 対応、Render 初回デプロイ時の Prisma schema 反映、async route error の吸収を実施した
+
+## 2.6 現在の残件まとめ
+イテレーション2完了時点で、次フェーズへ持ち越す主な残件は以下です。
+- Expo Router を前提にした URL ベースルーティングの本格化
+- `App.tsx` に集中している認証・選択中データ・画面遷移 state の分離
+- Admin の Web 一覧最適化（table / filter / sort / paging）
+- Render で `db push` に依存している初回デプロイ手順を、正式 migration 管理へ移行
+- Web / backend / mobile の監視、エラー追跡、運用メトリクス整備
+
+## 2.7 クローズ判断
+イテレーション2は、**「Web で主要MVP導線を表示・利用できる状態まで戻す」** という目的に対して完了と判断します。
+今後は「復旧フェーズ」ではなく、「Web ネイティブ最適化フェーズ」へ移行します。
 
 ---
-
 ## 3. Web URL ルーティング
 
 ### 3.1 目的
@@ -161,10 +172,11 @@
 ---
 
 ## 7. 推奨実施順序
-1. Web URL ルーティング
-2. グローバル状態管理
+1. Web URL ルーティングの本格化
+2. グローバル状態管理の整理
 3. Admin の Web 最適化
-4. Sentry / 監視導入
+4. Prisma migration 正式化とデプロイ手順の安定化
+5. Sentry / 監視導入
 
 ### 理由
 - URL routing と state 管理は Web UX の基盤
@@ -185,6 +197,10 @@
 - table / filter / sort 追加
 
 ### Phase C
+- Prisma migration 正式化
+- Render / staging / production のデプロイ手順固定化
+
+### Phase D
 - Sentry / monitoring
 - request-id / release version / env tagging
 

@@ -7,6 +7,7 @@
 - backend API（Node.js / TypeScript / Express / Prisma）
 - DBスキーマ（PostgreSQL）
 - mobile UI（Expo / React Native）
+- web 配備構成（Expo Router / static export / Vercel）
 - MVP運用ルール（簡易認証、イベント運用、結果反映、アバター育成）
 
 ---
@@ -27,6 +28,14 @@
 - Admin で簡易メトリクスと Web コンソール表示をサポート
 - `voteEndAt` / `resultAt` に基づく自動状態更新を実装
 - アバターのパッシブ効果と育成アイテム利用を実装
+
+### 2.3 現在の実装ステータス（2026-03-23 / イテレーション2完了時点）
+- backend API と React Native 向け MVP UI 本体は、引き続き `mobile/App.tsx` を中心に維持されています。
+- Web 配備向けには Expo Router を導入し、`mobile/index.js` から `expo-router/entry` を起動、`mobile/app/index.tsx` で `App.tsx` を再利用する構成へ接続済みです。
+- `node ./node_modules/expo/bin/cli export --platform web` により静的ファイルを書き出し、Vercel での Web デプロイを継続可能な状態です。
+- Render 側では Prisma schema 未作成時の初回デプロイ対策として `start:render` を使い、`db push` と seed により API 起動を安定化しています。
+- Web では UI 表示、onboarding / login、admin 操作、投票、結果確認まで確認済みであり、イテレーション2の目標としていた「主要MVP導線の Web 復旧」は達成済みです。
+- 一方で、URL 中心ルーティングへの本格移行、App 状態責務の整理、Admin の一覧最適化、監視導入などは次フェーズの残件です。
 
 ---
 
@@ -54,7 +63,11 @@ backend/
     modules/             # 機能別コントローラ
     routes/              # APIルーティング
 mobile/
-  App.tsx                # 画面遷移ハブ
+  App.tsx                # 既存MVP UI本体（現在は主にネイティブ/旧構成側の実装資産）
+  index.js               # Expo Router entry
+  app/                   # Web向けルート定義
+    _layout.tsx          # Router layout
+    index.tsx            # Web 入口。既存 App.tsx を再利用
   src/
     components/          # 共通UI
     lib/                 # API client / 型 / session
@@ -69,6 +82,14 @@ docs/
   - `GET /`
   - `GET /health`
   - `GET /api`
+
+### 3.4 Web配備アーキテクチャの現状
+- Web の起動エントリは `mobile/package.json` の `main = index.js` です。
+- `mobile/index.js` は `expo-router/entry` を読み込み、Expo Router ベースで Web ルーティングを開始します。
+- `mobile/app.json` では `plugins = ["expo-router"]` と `web.output = "static"` を設定し、Vercel 配備しやすい静的エクスポート前提にしています。
+- `mobile/app/index.tsx` は現在 `App.tsx` を再エクスポートしており、既存の AppShell / Home / Events / Vote / Admin などを Web でも利用します。
+- そのため Web は「プレースホルダー表示」段階を脱し、既存 MVP 画面群を暫定的に Router 配下へ接続した構成です。
+- ただし URL 設計と画面 state はまだ `App.tsx` 主導のため、Expo Router 本来の route 分割・責務整理は今後の課題として残っています。
 
 ---
 
