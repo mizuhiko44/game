@@ -5,6 +5,7 @@ BASE_URL="${BASE_URL:-http://localhost:3000}"
 API_BASE="${BASE_URL%/}/api"
 NICKNAME="smoke_$(date +%s)"
 TMP_DIR="$(mktemp -d)"
+COOKIE_JAR="$TMP_DIR/cookies.txt"
 cleanup() { rm -rf "$TMP_DIR"; }
 trap cleanup EXIT
 
@@ -42,8 +43,27 @@ ADMIN_USER_ID="$(json_get "$ADMIN_LOGIN_JSON" 'data["user"]["id"]')"
 ADMIN_ACCESS_TOKEN="$(json_get "$ADMIN_LOGIN_JSON" 'data["auth"]["accessToken"]')"
 
 LOGIN_JSON="$TMP_DIR/login.json"
-request POST "$API_BASE/users/login" "$LOGIN_JSON" -H 'Content-Type: application/json' -d "{\"nickname\":\"$NICKNAME\"}"
+request POST "$API_BASE/users/login" "$LOGIN_JSON" -c "$COOKIE_JAR" -H 'Content-Type: application/json' -d "{\"nickname\":\"$NICKNAME\"}"
 json_get "$LOGIN_JSON" 'data["user"]["id"]' >/dev/null
+
+REFRESH_JSON="$TMP_DIR/refresh.json"
+request POST "$API_BASE/auth/refresh" "$REFRESH_JSON" -b "$COOKIE_JAR" -c "$COOKIE_JAR" -H 'Content-Type: application/json' -d '{}'
+REFRESHED_ACCESS_TOKEN="$(json_get "$REFRESH_JSON" 'data["auth"]["accessToken"]')"
+
+AUTH_ME_JSON="$TMP_DIR/auth_me.json"
+request GET "$API_BASE/auth/me" "$AUTH_ME_JSON" -H "Authorization: Bearer $REFRESHED_ACCESS_TOKEN" -H "x-user-id: $USER_ID"
+json_get "$AUTH_ME_JSON" 'data["id"]' >/dev/null
+
+LOGOUT_JSON="$TMP_DIR/logout.txt"
+request POST "$API_BASE/auth/logout" "$LOGOUT_JSON" -b "$COOKIE_JAR" -H 'Content-Type: application/json' -d '{}'
+
+POST_LOGOUT_REFRESH_JSON="$TMP_DIR/post_logout_refresh.json"
+HTTP_STATUS="$(curl -sS -o "$POST_LOGOUT_REFRESH_JSON" -w "%{http_code}" -X POST "$API_BASE/auth/refresh" -b "$COOKIE_JAR" -H 'Content-Type: application/json' -d '{}')"
+if [ "$HTTP_STATUS" != "401" ]; then
+  echo "Expected post-logout refresh to fail with 401, got $HTTP_STATUS" >&2
+  cat "$POST_LOGOUT_REFRESH_JSON" >&2
+  exit 1
+fi
 
 NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 VOTE_END="$(date -u -d '+8 seconds' +%Y-%m-%dT%H:%M:%SZ)"

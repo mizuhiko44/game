@@ -1,54 +1,63 @@
-import { Tab } from "./navigation";
-
-type RouteState = {
-  tab: Tab;
-  selectedEventId?: string;
-  selectedResultId?: string;
-};
+import { RouteState } from "./routes";
 
 function canUseBrowserRouting() {
   return typeof window !== "undefined" && typeof window.history !== "undefined";
 }
 
+function buildUrl(pathname: string, params: Record<string, string | undefined>) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) searchParams.set(key, value);
+  });
+
+  const query = searchParams.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
+
 export function getCurrentRouteState(): RouteState {
   if (!canUseBrowserRouting()) return { tab: "Onboarding" };
 
-  const pathname = window.location.pathname;
+  const { pathname, search } = window.location;
+  const searchParams = new URLSearchParams(search);
+
   if (pathname === "/" || pathname === "/onboarding") return { tab: "Onboarding" };
   if (pathname === "/home") return { tab: "Home" };
   if (pathname === "/events") return { tab: "Events" };
-  if (pathname.startsWith("/events/")) return { tab: "EventDetail", selectedEventId: pathname.split("/")[2] };
-  if (pathname === "/vote") return { tab: "Vote" };
-  if (pathname === "/vote/complete") return { tab: "VoteComplete" };
+  if (pathname.startsWith("/events/")) return { tab: "EventDetail", selectedEventId: decodeURIComponent(pathname.split("/")[2] ?? "") };
+  if (pathname === "/vote") return { tab: "Vote", selectedEventId: searchParams.get("eventId") ?? undefined };
+  if (pathname === "/vote/complete") return { tab: "VoteComplete", selectedEventId: searchParams.get("eventId") ?? undefined };
   if (pathname === "/history") return { tab: "History" };
   if (pathname === "/results") return { tab: "Results" };
-  if (pathname.startsWith("/results/")) return { tab: "ResultDetail", selectedResultId: pathname.split("/")[2] };
+  if (pathname.startsWith("/results/")) return { tab: "ResultDetail", selectedResultId: decodeURIComponent(pathname.split("/")[2] ?? "") };
   if (pathname === "/avatar") return { tab: "Avatar" };
   if (pathname === "/me") return { tab: "MyPage" };
   if (pathname === "/admin") return { tab: "Admin" };
   return { tab: "Home" };
 }
 
+export function buildRoutePath(state: RouteState) {
+  switch (state.tab) {
+    case "Onboarding": return "/onboarding";
+    case "Home": return "/home";
+    case "Events": return "/events";
+    case "EventDetail": return state.selectedEventId ? `/events/${encodeURIComponent(state.selectedEventId)}` : "/events";
+    case "Vote": return buildUrl("/vote", { eventId: state.selectedEventId });
+    case "VoteComplete": return buildUrl("/vote/complete", { eventId: state.selectedEventId });
+    case "History": return "/history";
+    case "Results": return "/results";
+    case "ResultDetail": return state.selectedResultId ? `/results/${encodeURIComponent(state.selectedResultId)}` : "/results";
+    case "Avatar": return "/avatar";
+    case "MyPage": return "/me";
+    case "Admin": return "/admin";
+  }
+}
+
 export function syncRouteState(state: RouteState) {
   if (!canUseBrowserRouting()) return;
 
-  let path = "/";
-  switch (state.tab) {
-    case "Onboarding": path = "/onboarding"; break;
-    case "Home": path = "/home"; break;
-    case "Events": path = "/events"; break;
-    case "EventDetail": path = state.selectedEventId ? `/events/${state.selectedEventId}` : "/events"; break;
-    case "Vote": path = "/vote"; break;
-    case "VoteComplete": path = "/vote/complete"; break;
-    case "History": path = "/history"; break;
-    case "Results": path = "/results"; break;
-    case "ResultDetail": path = state.selectedResultId ? `/results/${state.selectedResultId}` : "/results"; break;
-    case "Avatar": path = "/avatar"; break;
-    case "MyPage": path = "/me"; break;
-    case "Admin": path = "/admin"; break;
-  }
-
-  if (window.location.pathname !== path) {
+  const path = buildRoutePath(state);
+  const currentPath = `${window.location.pathname}${window.location.search}`;
+  if (currentPath !== path) {
     window.history.pushState({}, "", path);
   }
 }

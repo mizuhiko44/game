@@ -44,7 +44,7 @@ export function EventListScreen({ userId, onSelectEvent }: { userId?: string; on
   const [typeFilter, setTypeFilter] = useState<EventTypeFilter>("all");
   const { width } = useWindowDimensions();
   const wideWeb = isWebPlatform() && isWideLayout(width);
-  const { user, setTab, setSelectedEventId } = useAppState();
+  const { user, selectEvent } = useAppState();
 
   useEffect(() => {
     if (!userId) return;
@@ -235,7 +235,7 @@ export function EventListScreen({ userId, onSelectEvent }: { userId?: string; on
                     <Pressable onPress={() => onSelectEvent?.(activeEvent.id)} style={{ backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }}>
                       <Text style={{ color: colors.bg, fontWeight: "700" }}>詳細を見る</Text>
                     </Pressable>
-                    <Pressable onPress={() => { setSelectedEventId(activeEvent.id); setTab("Vote"); }} style={{ backgroundColor: "#1B335B", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }}>
+                    <Pressable onPress={() => { selectEvent(activeEvent.id, "Vote"); }} style={{ backgroundColor: "#1B335B", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }}>
                       <Text style={{ color: colors.text, fontWeight: "700" }}>Vote へ</Text>
                     </Pressable>
                     <Pressable onPress={() => ensureParticipantsLoaded(activeEvent.id, true)} style={{ backgroundColor: "#10182E", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: "#2B3554" }}>
