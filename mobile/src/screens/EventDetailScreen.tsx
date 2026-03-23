@@ -14,7 +14,7 @@ function formatDateTime(value?: string) {
 export function EventDetailScreen({ userId, eventId }: { userId?: string; eventId?: string }) {
   const [detail, setDetail] = useState<EventDetailPayload | null>(null);
   const [error, setError] = useState("");
-  const { setTab, setSelectedEventId } = useAppState();
+  const { selectEvent } = useAppState();
 
   useEffect(() => {
     if (!userId || !eventId) return;
@@ -43,7 +43,7 @@ export function EventDetailScreen({ userId, eventId }: { userId?: string; eventI
                 <Text style={{ color: colors.subText }}>{detail.description ?? "説明なし"}</Text>
               </View>
               <Pressable
-                onPress={() => { if (eventId) setSelectedEventId(eventId); setTab("Vote"); }}
+                onPress={() => { if (eventId) selectEvent(eventId, "Vote"); }}
                 disabled={!canVote}
                 style={{
                   backgroundColor: canVote ? colors.accent : "#2B3554",
@@ -78,7 +78,7 @@ export function EventDetailScreen({ userId, eventId }: { userId?: string; eventI
             <Text style={{ color: colors.text, fontWeight: "700", fontSize: 18 }}>Popularity</Text>
             <Text style={{ color: colors.subText }}>{popularityText}</Text>
             {canVote && (
-              <Pressable onPress={() => { if (eventId) setSelectedEventId(eventId); setTab("Vote"); }} style={{ marginTop: 6, alignSelf: "flex-start" }}>
+              <Pressable onPress={() => { if (eventId) selectEvent(eventId, "Vote"); }} style={{ marginTop: 6, alignSelf: "flex-start" }}>
                 <Text style={{ color: colors.accent, fontWeight: "700" }}>このイベントに投票する →</Text>
               </Pressable>
             )}

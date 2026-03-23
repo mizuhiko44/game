@@ -229,6 +229,7 @@
 
 ## 9. 成果物イメージ
 - Web/スマホ共通ルーティング設計書
+- `docs/url-routing-map.md` による Route 対応表 / auth guard 方針
 - グローバル状態管理設計
 - Admin Web UI ワイヤー案
 - 監視/通知運用手順書

@@ -4,9 +4,10 @@ import { AppShell } from "./src/components/AppShell";
 import { ApiError, apiRequest } from "./src/lib/api";
 import { AUTH_MODE } from "./src/lib/env";
 import { reportClientError } from "./src/lib/monitoring";
-import { getCurrentRouteState, subscribeRouteChanges, syncRouteState } from "./src/lib/router";
-import { clearAuthSession, clearSavedNickname, getAuthSession, getSavedNickname, saveAuthSession } from "./src/lib/session";
 import { isWebPlatform } from "./src/lib/platform";
+import { getCurrentRouteState, subscribeRouteChanges, syncRouteState } from "./src/lib/router";
+import { isSameRoute, resolveRouteGuard } from "./src/lib/routes";
+import { clearAuthSession, clearSavedNickname, getAuthSession, getSavedNickname, saveAuthSession } from "./src/lib/session";
 import { AdminScreen } from "./src/screens/AdminScreen";
 import { AdminAccessScreen } from "./src/screens/AdminAccessScreen";
 import { AvatarScreen } from "./src/screens/AvatarScreen";
@@ -38,22 +39,28 @@ async function persistAuthPayload(payload: AuthSessionResponse) {
 function AppInner() {
   const [booting, setBooting] = useState(true);
   const { width } = useWindowDimensions();
-  const { tab, setTab, user, setUser, selectedEventId, setSelectedEventId, lastVote, setLastVote, selectedResult, setSelectedResult } = useAppState();
+  const { route, setRoute, tab, setTab, user, setUser, selectedEventId, selectedResultId, selectEvent, selectResult, lastVote, setLastVote } = useAppState();
 
   useEffect(() => {
-    const route = getCurrentRouteState();
-    setTab(route.tab);
-    if (route.selectedEventId) setSelectedEventId(route.selectedEventId);
-    const unsubscribe = subscribeRouteChanges((nextRoute) => {
-      setTab(nextRoute.tab);
-      setSelectedEventId(nextRoute.selectedEventId);
+    const nextRoute = getCurrentRouteState();
+    setRoute(nextRoute);
+    const unsubscribe = subscribeRouteChanges((changedRoute) => {
+      setRoute((previous) => (isSameRoute(previous, changedRoute) ? previous : changedRoute));
     });
     return unsubscribe;
-  }, [setSelectedEventId, setTab]);
+  }, [setRoute]);
 
   useEffect(() => {
-    syncRouteState({ tab, selectedEventId, selectedResultId: selectedResult?.id });
-  }, [tab, selectedEventId, selectedResult]);
+    syncRouteState(route);
+  }, [route]);
+
+  useEffect(() => {
+    if (booting) return;
+    const guardRedirect = resolveRouteGuard(route, user);
+    if (guardRedirect && !isSameRoute(route, guardRedirect)) {
+      setRoute(guardRedirect);
+    }
+  }, [booting, route, setRoute, user]);
 
   useEffect(() => {
     async function bootstrap() {
@@ -66,7 +73,6 @@ function AppInner() {
           });
           await persistAuthPayload(refreshed);
           setUser(refreshed.user);
-          if (getCurrentRouteState().tab === "Onboarding") setTab("Home");
           return;
         }
 
@@ -80,7 +86,6 @@ function AppInner() {
         });
         await persistAuthPayload(rememberedUser);
         setUser(rememberedUser.user);
-        if (getCurrentRouteState().tab === "Onboarding") setTab("Home");
       } catch (error) {
         const apiError = error as ApiError;
         reportClientError(error, { phase: "bootstrap" });
@@ -100,7 +105,7 @@ function AppInner() {
       reportClientError(error, { phase: "bootstrap_outer" });
       setBooting(false);
     });
-  }, []);
+  }, [setUser]);
 
   const logout = async () => {
     try {
@@ -117,10 +122,8 @@ function AppInner() {
       await clearSavedNickname();
       await clearAuthSession();
       setUser(null);
-      setSelectedEventId(undefined);
-      setSelectedResult(undefined);
       setLastVote(undefined);
-      setTab("Onboarding");
+      setRoute({ tab: "Onboarding" });
     }
   };
 
@@ -130,7 +133,7 @@ function AppInner() {
         <OnboardingScreen
           onDone={(nextUser: User) => {
             setUser(nextUser);
-            setTab("Home");
+            setRoute({ tab: "Home" });
           }}
         />
       );
@@ -141,8 +144,7 @@ function AppInner() {
         <EventListScreen
           userId={user?.id}
           onSelectEvent={(eventId) => {
-            setSelectedEventId(eventId);
-            setTab("EventDetail");
+            selectEvent(eventId);
           }}
         />
       );
@@ -154,7 +156,7 @@ function AppInner() {
           userId={user?.id}
           onComplete={(vote) => {
             setLastVote(vote);
-            setTab("VoteComplete");
+            setRoute((previous) => ({ ...previous, tab: "VoteComplete" }));
           }}
         />
       );
@@ -165,14 +167,13 @@ function AppInner() {
       return (
         <ResultListScreen
           userId={user?.id}
-          onSelectResult={(row) => {
-            setSelectedResult(row);
-            setTab("ResultDetail");
+          onSelectResult={(resultId) => {
+            selectResult(resultId);
           }}
         />
       );
     }
-    if (tab === "ResultDetail") return <ResultDetailScreen result={selectedResult} />;
+    if (tab === "ResultDetail") return <ResultDetailScreen userId={user?.id} resultId={selectedResultId} />;
     if (tab === "Avatar") return <AvatarScreen userId={user?.id} />;
     if (tab === "MyPage") return <MyPageScreen userId={user?.id} />;
     if (tab === "Admin") {

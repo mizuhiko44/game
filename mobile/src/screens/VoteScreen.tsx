@@ -14,7 +14,7 @@ export function VoteScreen({ userId, onComplete }: { userId?: string; onComplete
   const [optionId, setOptionId] = useState("");
   const [betPoints, setBetPoints] = useState("100");
   const [message, setMessage] = useState("");
-  const { selectedEventId } = useAppState();
+  const { selectedEventId, selectEvent } = useAppState();
 
   const refreshEvents = async () => {
     if (!userId) return;
@@ -83,7 +83,7 @@ export function VoteScreen({ userId, onComplete }: { userId?: string; onComplete
             {rankedEvents.map((event, index) => (
               <Pressable
                 key={event.id}
-                onPress={() => setEventId(event.id)}
+                onPress={() => { setEventId(event.id); selectEvent(event.id, "Vote"); }}
                 style={{
                   ...CARD_STYLE,
                   borderWidth: 1,
