@@ -51,7 +51,7 @@ request POST "$API_BASE/auth/refresh" "$REFRESH_JSON" -b "$COOKIE_JAR" -c "$COOK
 REFRESHED_ACCESS_TOKEN="$(json_get "$REFRESH_JSON" 'data["auth"]["accessToken"]')"
 
 AUTH_ME_JSON="$TMP_DIR/auth_me.json"
-request GET "$API_BASE/auth/me" "$AUTH_ME_JSON" -H "Authorization: Bearer $REFRESHED_ACCESS_TOKEN"
+request GET "$API_BASE/auth/me" "$AUTH_ME_JSON" -H "Authorization: Bearer $REFRESHED_ACCESS_TOKEN" -H "x-user-id: $USER_ID"
 json_get "$AUTH_ME_JSON" 'data["id"]' >/dev/null
 
 LOGOUT_JSON="$TMP_DIR/logout.txt"
