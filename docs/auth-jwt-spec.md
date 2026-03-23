@@ -19,6 +19,7 @@
 - 利用箇所: access token 再発行
 - 想定TTL: 30日
 - 現行実装では `AuthSession` に refresh token の SHA-256 ハッシュを保存し、`/api/auth/refresh` と `/api/auth/logout` で失効管理を行う
+- login / onboarding / refresh 時は refresh token を httpOnly cookie にも設定し、web の JWT デフォルト運用で利用する
 
 ## 4. JWT Claims
 - `sub`: user id
@@ -38,6 +39,8 @@
 
 ### 現在の認証挙動
 - `POST /api/users/login` と `POST /api/auth/login` は同じログイン処理を利用し、JWT を返却する
+- `POST /api/auth/refresh` と `POST /api/auth/logout` は request body の `refreshToken` に加え、httpOnly cookie の refresh token でも動作する
+- backend は CORS credentials を有効化し、cross-origin の web staging でも cookie refresh を利用できる
 - `mvp_header` では一般保護APIは `x-user-id` 必須
 - `jwt_transition` では一般保護APIは `x-user-id` と Bearer token を併用可能
 - `jwt_transition` / `jwt_required` の Admin API は Bearer token + `role=admin` を必須とする
@@ -53,8 +56,8 @@ Authorization: Bearer <access_token>
 - `lastLoginAt`
 
 ## 7. mobile/web保存方針
-- web: localStorage ではなく secure cookie またはメモリ + refresh 制御を優先検討
-- mobile: secure storage を採用予定
+- web: refresh token は httpOnly cookie、access token はメモリ保持で運用し、起動時・401時に `/api/auth/refresh` で再取得する
+- mobile: 現在の Expo 実装では auth session をアプリ内 session として扱い、JWT デフォルト運用・cookie refresh の導線を共通化している
 
 ## 8. 権限制御
 - Admin API は `role=admin` 必須
@@ -71,4 +74,4 @@ Authorization: Bearer <access_token>
 - access token は署名付きJWTとして生成し、API認可に使用する
 - refresh token も署名付きJWTとして生成するが、DBには平文を保存せずハッシュのみ保持する
 - refresh 実行時は既存 session を revoke したうえで新しい refresh token を再発行する
-- logout は該当 refresh session を revoke することで再利用を防ぐ
+- logout は該当 refresh session を revoke し、refresh cookie も削除することで再利用を防ぐ
