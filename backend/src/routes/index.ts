@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { RequestHandler, Router } from "express";
 import { adminMiddleware, authMiddleware } from "../middlewares/auth";
 import { logout, getAuthMe, refreshAuthToken } from "../modules/auth/auth.controller";
 import { getAdminMetrics, settleEvent } from "../modules/admin/admin.controller";
@@ -12,29 +12,35 @@ import { createVote, voteHistory } from "../modules/votes/votes.controller";
 
 const router = Router();
 
-router.post("/users/onboarding", onboarding);
-router.post("/users/login", login);
-router.post("/auth/login", login);
-router.post("/auth/refresh", refreshAuthToken);
-router.post("/auth/logout", logout);
+function wrapAsync(handler: RequestHandler): RequestHandler {
+  return (req, res, next) => {
+    Promise.resolve(handler(req, res, next)).catch(next);
+  };
+}
+
+router.post("/users/onboarding", wrapAsync(onboarding));
+router.post("/users/login", wrapAsync(login));
+router.post("/auth/login", wrapAsync(login));
+router.post("/auth/refresh", wrapAsync(refreshAuthToken));
+router.post("/auth/logout", wrapAsync(logout));
 
 router.use(authMiddleware);
-router.get("/auth/me", getAuthMe);
-router.get("/home", getHome);
-router.get("/events", listEvents);
-router.get("/events/:eventId", getEventDetail);
-router.get("/events/:eventId/participants", listEventParticipants);
-router.post("/votes", createVote);
-router.get("/votes/history", voteHistory);
-router.get("/results", listResults);
-router.get("/avatar", getAvatar);
-router.post("/avatar/level-up", levelUpAvatar);
-router.get("/me", getMe);
+router.get("/auth/me", wrapAsync(getAuthMe));
+router.get("/home", wrapAsync(getHome));
+router.get("/events", wrapAsync(listEvents));
+router.get("/events/:eventId", wrapAsync(getEventDetail));
+router.get("/events/:eventId/participants", wrapAsync(listEventParticipants));
+router.post("/votes", wrapAsync(createVote));
+router.get("/votes/history", wrapAsync(voteHistory));
+router.get("/results", wrapAsync(listResults));
+router.get("/avatar", wrapAsync(getAvatar));
+router.post("/avatar/level-up", wrapAsync(levelUpAvatar));
+router.get("/me", wrapAsync(getMe));
 
 router.use("/admin", adminMiddleware);
-router.post("/admin/events", createEvent);
-router.get("/admin/users", listRegisteredUsers);
-router.get("/admin/metrics", getAdminMetrics);
-router.post("/admin/events/settle", settleEvent);
+router.post("/admin/events", wrapAsync(createEvent));
+router.get("/admin/users", wrapAsync(listRegisteredUsers));
+router.get("/admin/metrics", wrapAsync(getAdminMetrics));
+router.post("/admin/events/settle", wrapAsync(settleEvent));
 
 export default router;

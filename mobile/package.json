@@ -6,7 +6,7 @@
   "scripts": {
     "start": "expo start",
     "web": "expo start --web",
-    "build:web": "npx expo export --platform web",
+    "build:web": "node ./node_modules/expo/bin/cli export --platform web",
     "typecheck": "tsc --noEmit",
     "ci": "npm run typecheck"
   },
