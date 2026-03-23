@@ -1,4 +1,4 @@
-import { PropsWithChildren, createContext, useContext, useMemo, useState } from "react";
+import { PropsWithChildren, createContext, useCallback, useContext, useMemo, useState } from "react";
 import { APP_ENV, AUTH_MODE } from "../lib/env";
 import { RouteState } from "../lib/routes";
 import { User, VoteCreateResponse } from "../lib/types";
@@ -29,21 +29,21 @@ export function AppStateProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
   const [lastVote, setLastVote] = useState<VoteCreateResponse | undefined>();
 
-  const setRoute: AppStateValue["setRoute"] = (nextRoute) => {
+  const setRoute: AppStateValue["setRoute"] = useCallback((nextRoute) => {
     setRouteState((previous) => (typeof nextRoute === "function" ? nextRoute(previous) : nextRoute));
-  };
+  }, []);
 
-  const setTab: AppStateValue["setTab"] = (tab) => {
+  const setTab: AppStateValue["setTab"] = useCallback((tab) => {
     setRouteState((previous) => ({ ...previous, tab }));
-  };
+  }, []);
 
-  const selectEvent: AppStateValue["selectEvent"] = (eventId, nextTab = "EventDetail") => {
+  const selectEvent: AppStateValue["selectEvent"] = useCallback((eventId, nextTab = "EventDetail") => {
     setRouteState((previous) => ({ ...previous, tab: nextTab, selectedEventId: eventId }));
-  };
+  }, []);
 
-  const selectResult: AppStateValue["selectResult"] = (resultId, nextTab = "ResultDetail") => {
+  const selectResult: AppStateValue["selectResult"] = useCallback((resultId, nextTab = "ResultDetail") => {
     setRouteState((previous) => ({ ...previous, tab: nextTab, selectedResultId: resultId }));
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -62,7 +62,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       appEnv: APP_ENV,
       authMode: AUTH_MODE,
     }),
-    [route, user, lastVote]
+    [route, setRoute, setTab, selectEvent, selectResult, user, lastVote]
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
