@@ -1,11 +1,13 @@
-import { API_BASE_URL } from "./env";
+import { API_BASE_URL, AUTH_MODE } from "./env";
 import { reportClientError } from "./monitoring";
-import { getAuthSession } from "./session";
+import { clearAuthSession, getAuthSession, saveAuthSession } from "./session";
+import { AuthSessionResponse } from "./types";
 
 type ApiOptions = {
   method?: "GET" | "POST";
   body?: unknown;
   userId?: string;
+  skipAuthRefresh?: boolean;
 };
 
 export class ApiError extends Error {
@@ -36,6 +38,39 @@ function safeJsonParse(text: string) {
   }
 }
 
+function isRefreshableAuthRequest(path: string) {
+  const normalizedPath = normalizePath(path);
+  return !normalizedPath.startsWith("/api/auth/refresh") && !normalizedPath.startsWith("/api/auth/logout");
+}
+
+async function refreshAccessToken() {
+  if (AUTH_MODE === "mvp_header") return false;
+
+  const authSession = await getAuthSession();
+  try {
+    const refreshed = await apiRequest<AuthSessionResponse>("/api/auth/refresh", {
+      method: "POST",
+      body: authSession?.refreshToken ? { refreshToken: authSession.refreshToken } : {},
+      skipAuthRefresh: true,
+    });
+
+    await saveAuthSession({
+      accessToken: refreshed.auth.accessToken,
+      refreshToken: refreshed.auth.refreshToken,
+      userId: refreshed.user.id,
+      nickname: refreshed.user.nickname,
+      role: refreshed.user.role,
+      expiresAt: refreshed.auth.expiresAt,
+      refreshExpiresAt: refreshed.auth.refreshExpiresAt,
+    });
+    return true;
+  } catch (error) {
+    await clearAuthSession();
+    reportClientError(error, { phase: "auth_refresh" });
+    return false;
+  }
+}
+
 export async function apiRequest<T>(path: string, options: ApiOptions = {}) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (options.userId) {
@@ -53,10 +88,18 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}) {
       method: options.method ?? "GET",
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
+      credentials: "include",
     });
   } catch (error) {
     reportClientError(error, { phase: "network", path, apiBaseUrl: API_BASE_URL });
     throw new ApiError(`Network error: backendに接続できません。API_BASE_URL=${API_BASE_URL} を確認してください。`);
+  }
+
+  if (response.status === 401 && !options.skipAuthRefresh && isRefreshableAuthRequest(path)) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return apiRequest<T>(path, { ...options, skipAuthRefresh: true });
+    }
   }
 
   const text = await response.text();
