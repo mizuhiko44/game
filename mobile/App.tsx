@@ -8,7 +8,6 @@ import { isWebPlatform } from "./src/lib/platform";
 import { getCurrentRouteState, subscribeRouteChanges, syncRouteState } from "./src/lib/router";
 import { isSameRoute, resolveRouteGuard } from "./src/lib/routes";
 import { clearAuthSession, clearSavedNickname, getAuthSession, getSavedNickname, saveAuthSession } from "./src/lib/session";
-import { isWebPlatform } from "./src/lib/platform";
 import { AdminScreen } from "./src/screens/AdminScreen";
 import { AdminAccessScreen } from "./src/screens/AdminAccessScreen";
 import { AvatarScreen } from "./src/screens/AvatarScreen";
