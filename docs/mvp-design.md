@@ -476,3 +476,9 @@ actualConsumedPoints = max(1, actualConsumedPoints)
 4. Home/Result UX改善
 5. 外部監視・アラート基盤追加
 6. Web管理画面の操作性改善
+
+## 17. GitHub残件整理の方針
+- GitHub 上で管理する残件は、実装済み内容の「不具合修正」と、次フェーズの「構造改善 / 運用改善」を分けて起票する
+- 次フェーズの主要残件は、Router 本格化 / App state 分離 / Admin Web 最適化 / migration 正式運用化 / 監視導入 / JWT hardening / テスト拡張 を中心に整理する
+- 起票時は「背景」「対応内容」「完了条件」を明記し、設計判断の参照元として `docs/github-remaining-issues-summary.md` を使う
+- 残件一覧の詳細は `docs/github-remaining-issues-summary.md` を参照
