@@ -32,7 +32,7 @@ function isAllowedOrigin(origin: string, allowedOrigins: string[]) {
 
 const routeSummary = {
   appEnv: env.appEnv,
-  public: ["GET /", "GET /health", "GET /api", "GET /api/config", "POST /api/users/onboarding", "POST /api/users/login", "POST /api/auth/login", "POST /api/auth/refresh"],
+  public: ["GET /", "GET /health", "GET /api", "GET /api/config", "POST /api/users/onboarding", "POST /api/users/login", "POST /api/auth/login", "POST /api/auth/refresh", "POST /api/auth/logout"],
   protected: [
     "GET /api/home",
     "GET /api/events",
@@ -55,11 +55,14 @@ const routeSummary = {
     next: "Bearer token / JWT",
     issuer: env.jwtIssuer,
     audience: env.jwtAudience,
+    refreshTransport: "httpOnly-cookie-or-body",
+    refreshCookieName: env.refreshTokenCookieName,
   },
 };
 
 app.use(
   cors({
+    credentials: true,
     origin(origin, callback) {
       if (!origin || isAllowedOrigin(origin, env.corsOrigins)) {
         callback(null, true);
@@ -111,6 +114,8 @@ app.get("/api/config", (_req, res) =>
       audience: env.jwtAudience,
       accessTokenTtlMinutes: env.accessTokenTtlMinutes,
       refreshTokenTtlDays: env.refreshTokenTtlDays,
+      refreshTransport: "httpOnly-cookie-or-body",
+      refreshCookieName: env.refreshTokenCookieName,
     },
   })
 );

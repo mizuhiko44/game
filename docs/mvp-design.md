@@ -34,8 +34,9 @@
 - Web 配備向けには Expo Router を導入し、`mobile/index.js` から `expo-router/entry` を起動、`mobile/app/index.tsx` で `App.tsx` を再利用する構成へ接続済みです。
 - `node ./node_modules/expo/bin/cli export --platform web` により静的ファイルを書き出し、Vercel での Web デプロイを継続可能な状態です。
 - Render 側では Prisma schema 未作成時の初回デプロイ対策として `start:render` を使い、`db push` と seed により API 起動を安定化しています。
-- Web では UI 表示、onboarding / login、admin 操作、投票、結果確認まで確認済みであり、イテレーション2の目標としていた「主要MVP導線の Web 復旧」は達成済みです。
-- 一方で、URL 中心ルーティングへの本格移行、App 状態責務の整理、Admin の一覧最適化、監視導入などは次フェーズの残件です。
+- Web では UI 表示、onboarding / login / home、admin 操作、投票、結果確認まで確認済みであり、イテレーション2の目標としていた「主要MVP導線の Web 復旧」は達成済みです。
+- JWT 運用は、web で httpOnly refresh cookie + in-memory access token を用いるデフォルト導線まで実装済みです。
+- 一方で、route component 分割の本格化、App 状態責務の整理、Admin の一覧最適化、migration 正式化、監視導入などは次フェーズの残件です。
 
 ---
 
@@ -89,7 +90,7 @@ docs/
 - `mobile/app.json` では `plugins = ["expo-router"]` と `web.output = "static"` を設定し、Vercel 配備しやすい静的エクスポート前提にしています。
 - `mobile/app/index.tsx` は現在 `App.tsx` を再エクスポートしており、既存の AppShell / Home / Events / Vote / Admin などを Web でも利用します。
 - そのため Web は「プレースホルダー表示」段階を脱し、既存 MVP 画面群を暫定的に Router 配下へ接続した構成です。
-- ただし URL 設計と画面 state はまだ `App.tsx` 主導のため、Expo Router 本来の route 分割・責務整理は今後の課題として残っています。
+- `mobile/src/lib/router.ts` による URL 同期は入っているものの、画面分割や data loader を伴う Expo Router 本来の route 構成にはまだ移行途中です。
 
 ---
 
@@ -459,7 +460,7 @@ actualConsumedPoints = max(1, actualConsumedPoints)
 ---
 
 ## 15. 現時点の制約・既知課題
-- Bearer JWT は実装済みだが、mobile の secure storage や cookie ベース運用など本番クライアント実装は未完了
+- Bearer JWT と web の cookie refresh 運用は実装済みだが、production 向け鍵ローテーションや外部監視通知は未完了
 - 自動テストは CI 上の backend smoke test / mobile typecheck 中心で、E2E は未整備
 - mobileの表示はMVP水準であり、UI/UXの改善余地あり
 - 通知は Home 画面の結果通知までで、Push通知やバックグラウンドジョブ基盤は未実装
@@ -470,7 +471,7 @@ actualConsumedPoints = max(1, actualConsumedPoints)
 
 ## 16. 今後の改善候補
 1. API統合テスト・E2Eテスト追加
-2. JWT 本番運用（secure storage / cookie / 鍵ローテーション）
+2. JWT production hardening（鍵ローテーション / 失効運用 / 通知連携）
 3. Push通知や非同期ジョブによるイベント結果通知の導入
 4. Home/Result UX改善
 5. 外部監視・アラート基盤追加

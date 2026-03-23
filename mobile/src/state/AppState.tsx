@@ -1,19 +1,23 @@
-import { PropsWithChildren, createContext, useContext, useMemo, useState } from "react";
+import { PropsWithChildren, createContext, useCallback, useContext, useMemo, useState } from "react";
 import { APP_ENV, AUTH_MODE } from "../lib/env";
-import { Tab } from "../lib/navigation";
-import { User, VoteCreateResponse, VoteHistoryItem } from "../lib/types";
+import { RouteState } from "../lib/routes";
+import { User, VoteCreateResponse } from "../lib/types";
+
+const DEFAULT_ROUTE: RouteState = { tab: "Onboarding" };
 
 type AppStateValue = {
-  tab: Tab;
-  setTab: (tab: Tab) => void;
+  route: RouteState;
+  setRoute: (route: RouteState | ((previous: RouteState) => RouteState)) => void;
+  tab: RouteState["tab"];
+  setTab: (tab: RouteState["tab"]) => void;
+  selectedEventId?: string;
+  selectedResultId?: string;
+  selectEvent: (eventId: string, nextTab?: RouteState["tab"]) => void;
+  selectResult: (resultId: string, nextTab?: RouteState["tab"]) => void;
   user: User | null;
   setUser: (user: User | null) => void;
-  selectedEventId?: string;
-  setSelectedEventId: (eventId?: string) => void;
   lastVote?: VoteCreateResponse;
   setLastVote: (vote?: VoteCreateResponse) => void;
-  selectedResult?: VoteHistoryItem;
-  setSelectedResult: (result?: VoteHistoryItem) => void;
   appEnv: string;
   authMode: string;
 };
@@ -21,28 +25,44 @@ type AppStateValue = {
 const AppStateContext = createContext<AppStateValue | null>(null);
 
 export function AppStateProvider({ children }: PropsWithChildren) {
-  const [tab, setTab] = useState<Tab>("Onboarding");
+  const [route, setRouteState] = useState<RouteState>(DEFAULT_ROUTE);
   const [user, setUser] = useState<User | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
   const [lastVote, setLastVote] = useState<VoteCreateResponse | undefined>();
-  const [selectedResult, setSelectedResult] = useState<VoteHistoryItem | undefined>();
+
+  const setRoute: AppStateValue["setRoute"] = useCallback((nextRoute) => {
+    setRouteState((previous) => (typeof nextRoute === "function" ? nextRoute(previous) : nextRoute));
+  }, []);
+
+  const setTab: AppStateValue["setTab"] = useCallback((tab) => {
+    setRouteState((previous) => ({ ...previous, tab }));
+  }, []);
+
+  const selectEvent: AppStateValue["selectEvent"] = useCallback((eventId, nextTab = "EventDetail") => {
+    setRouteState((previous) => ({ ...previous, tab: nextTab, selectedEventId: eventId }));
+  }, []);
+
+  const selectResult: AppStateValue["selectResult"] = useCallback((resultId, nextTab = "ResultDetail") => {
+    setRouteState((previous) => ({ ...previous, tab: nextTab, selectedResultId: resultId }));
+  }, []);
 
   const value = useMemo(
     () => ({
-      tab,
+      route,
+      setRoute,
+      tab: route.tab,
       setTab,
+      selectedEventId: route.selectedEventId,
+      selectedResultId: route.selectedResultId,
+      selectEvent,
+      selectResult,
       user,
       setUser,
-      selectedEventId,
-      setSelectedEventId,
       lastVote,
       setLastVote,
-      selectedResult,
-      setSelectedResult,
       appEnv: APP_ENV,
       authMode: AUTH_MODE,
     }),
-    [tab, user, selectedEventId, lastVote, selectedResult]
+    [route, setRoute, setTab, selectEvent, selectResult, user, lastVote]
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;

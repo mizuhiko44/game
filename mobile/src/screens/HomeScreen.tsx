@@ -36,7 +36,7 @@ export function HomeScreen({ userId }: { userId?: string }) {
   const [error, setError] = useState("");
   const { width } = useWindowDimensions();
   const wideWeb = isWebPlatform() && isWideLayout(width);
-  const { setTab, setSelectedEventId } = useAppState();
+  const { setTab, selectEvent } = useAppState();
 
   useEffect(() => {
     if (!userId) return;
@@ -54,8 +54,7 @@ export function HomeScreen({ userId }: { userId?: string }) {
   }, [payload]);
 
   const openEvent = (eventId: string) => {
-    setSelectedEventId(eventId);
-    setTab("EventDetail");
+    selectEvent(eventId);
   };
 
   return (
