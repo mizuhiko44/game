@@ -29,12 +29,13 @@
 - `voteEndAt` / `resultAt` に基づく自動状態更新を実装
 - アバターのパッシブ効果と育成アイテム利用を実装
 
-### 2.3 現在の実装ステータス（Voteブランチ分析結果）
+### 2.3 現在の実装ステータス（2026-03-23 / イテレーション2完了時点）
 - backend API と React Native 向け MVP UI 本体は、引き続き `mobile/App.tsx` を中心に維持されています。
-- Web 配備向けには Expo Router を導入し、`mobile/index.js` から `expo-router/entry` を起動、`mobile/app.json` で `web.output = static` を指定する構成へ手動調整されています。
-- その結果、`npx expo export --platform web` で静的ファイルを書き出し、Vercel にデプロイできる状態までは到達しています。
-- 一方で現在の Web エントリ `mobile/app/index.tsx` はプレースホルダー文字列のみを返す最小実装であり、既存の AppShell / Events / Vote / Admin などの UI はまだ Web 側に復帰していません。
-- したがって現時点の Web 実装は「デプロイ成功・文字列表示確認済み」までを完了範囲とし、「アプリ UI が正常表示される状態」は未達です。
+- Web 配備向けには Expo Router を導入し、`mobile/index.js` から `expo-router/entry` を起動、`mobile/app/index.tsx` で `App.tsx` を再利用する構成へ接続済みです。
+- `node ./node_modules/expo/bin/cli export --platform web` により静的ファイルを書き出し、Vercel での Web デプロイを継続可能な状態です。
+- Render 側では Prisma schema 未作成時の初回デプロイ対策として `start:render` を使い、`db push` と seed により API 起動を安定化しています。
+- Web では UI 表示、onboarding / login、admin 操作、投票、結果確認まで確認済みであり、イテレーション2の目標としていた「主要MVP導線の Web 復旧」は達成済みです。
+- 一方で、URL 中心ルーティングへの本格移行、App 状態責務の整理、Admin の一覧最適化、監視導入などは次フェーズの残件です。
 
 ---
 
@@ -66,7 +67,7 @@ mobile/
   index.js               # Expo Router entry
   app/                   # Web向けルート定義
     _layout.tsx          # Router layout
-    index.tsx            # 現在は文字列表示のみの仮トップ
+    index.tsx            # Web 入口。既存 App.tsx を再利用
   src/
     components/          # 共通UI
     lib/                 # API client / 型 / session
@@ -86,8 +87,9 @@ docs/
 - Web の起動エントリは `mobile/package.json` の `main = index.js` です。
 - `mobile/index.js` は `expo-router/entry` を読み込み、Expo Router ベースで Web ルーティングを開始します。
 - `mobile/app.json` では `plugins = ["expo-router"]` と `web.output = "static"` を設定し、Vercel 配備しやすい静的エクスポート前提にしています。
-- ただし、現時点で Router 配下に実装済みの画面は `mobile/app/index.tsx` の簡易テキスト表示のみです。
-- `mobile/App.tsx` に残っている既存 UI 群とは接続されていないため、Web では設計上の画面一覧と実表示内容に差分があります。
+- `mobile/app/index.tsx` は現在 `App.tsx` を再エクスポートしており、既存の AppShell / Home / Events / Vote / Admin などを Web でも利用します。
+- そのため Web は「プレースホルダー表示」段階を脱し、既存 MVP 画面群を暫定的に Router 配下へ接続した構成です。
+- ただし URL 設計と画面 state はまだ `App.tsx` 主導のため、Expo Router 本来の route 分割・責務整理は今後の課題として残っています。
 
 ---
 

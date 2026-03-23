@@ -20,12 +20,24 @@
 
 ---
 
-## 2.5 現在の着手状況
-今回、次点項目については以下の土台コードを先行追加します。
-- Web URL ルーティングの基本同期
-- AppState Context によるグローバル状態管理の土台
-- Admin の wide layout 最適化
-- monitoring フックの追加
+## 2.5 イテレーション2 完了サマリー
+イテレーション2では、当初の「デプロイはできるが UI は未復旧」状態から、以下までを完了しました。
+- Expo Router の Web 入口から `App.tsx` を再利用し、主要MVP画面を Web で表示可能にした
+- Vercel / Render 間の接続を見直し、Web から backend API へ接続できる状態へ復旧した
+- onboarding / login / admin / vote / results の主要導線を確認した
+- CORS preview origin 対応、Render 初回デプロイ時の Prisma schema 反映、async route error の吸収を実施した
+
+## 2.6 現在の残件まとめ
+イテレーション2完了時点で、次フェーズへ持ち越す主な残件は以下です。
+- Expo Router を前提にした URL ベースルーティングの本格化
+- `App.tsx` に集中している認証・選択中データ・画面遷移 state の分離
+- Admin の Web 一覧最適化（table / filter / sort / paging）
+- Render で `db push` に依存している初回デプロイ手順を、正式 migration 管理へ移行
+- Web / backend / mobile の監視、エラー追跡、運用メトリクス整備
+
+## 2.7 クローズ判断
+イテレーション2は、**「Web で主要MVP導線を表示・利用できる状態まで戻す」** という目的に対して完了と判断します。
+今後は「復旧フェーズ」ではなく、「Web ネイティブ最適化フェーズ」へ移行します。
 
 ただし、Voteブランチの現状は途中段階です。
 - Vercel での静的配備は確認済み
@@ -41,30 +53,6 @@
 - Vercel 配備を維持したまま、Home / Events / Vote / History / Results / Avatar / My Page / Admin の既存UI資産を再接続する
 - 少なくともトップ導線と主要画面が「文字列だけ」ではなくコンポーネントとして正常描画される状態にする
 - 旧 `App.tsx` 主導構成と Expo Router 主導構成の責務分担を明確化する
-
----
-
-## 2.7 イテレーション2の作業項目
-### Task 1. 画面復旧方針の確定
-- `mobile/App.tsx` を Router 配下から呼び出す暫定構成にするか
-- もしくは `src/screens/*` を `app/` 配下へ段階移植するか
-- まずは最短で UI を復旧できる案を採用する
-
-### Task 2. ルーティングと状態管理の接続見直し
-- `expo-router` の route と既存 `tab` / `selectedEventId` / `selectedResult` の対応表を作る
-- AppState の責務と Router の責務を分離する
-- `mobile/App.tsx` に残る bootstrap / session / logout の処理を再利用可能な単位へ寄せる
-
-### Task 3. 最低限の Web 表示完了条件
-- Home 画面が Web で表示できる
-- Events 一覧と Event Detail の遷移が成立する
-- Vote 完了までの主要導線が少なくとも開発環境で確認できる
-- Admin は閲覧または簡易導線まで復旧する
-
-### Task 4. 配備確認の継続
-- `npx expo export --platform web` の成功を維持する
-- Vercel 配備後も白画面ではなく UI が表示されることを確認する
-- 必要に応じて静的配備向け設定差分を文書化する
 
 ---
 ## 3. Web URL ルーティング
@@ -199,10 +187,10 @@
 ---
 
 ## 7. 推奨実施順序
-1. イテレーション2: Web UI 復旧と Router 再接続
-2. Web URL ルーティングの本格化
-3. グローバル状態管理の整理
-4. Admin の Web 最適化
+1. Web URL ルーティングの本格化
+2. グローバル状態管理の整理
+3. Admin の Web 最適化
+4. Prisma migration 正式化とデプロイ手順の安定化
 5. Sentry / 監視導入
 
 ### 理由
@@ -227,6 +215,10 @@
 ### Phase C
 - Admin web layout 最適化
 - table / filter / sort 追加
+
+### Phase C
+- Prisma migration 正式化
+- Render / staging / production のデプロイ手順固定化
 
 ### Phase D
 - Sentry / monitoring
