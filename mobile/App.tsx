@@ -6,6 +6,7 @@ import { AUTH_MODE } from "./src/lib/env";
 import { reportClientError } from "./src/lib/monitoring";
 import { getCurrentRouteState, subscribeRouteChanges, syncRouteState } from "./src/lib/router";
 import { clearAuthSession, clearSavedNickname, getAuthSession, getSavedNickname, saveAuthSession } from "./src/lib/session";
+import { isWebPlatform } from "./src/lib/platform";
 import { AdminScreen } from "./src/screens/AdminScreen";
 import { AdminAccessScreen } from "./src/screens/AdminAccessScreen";
 import { AvatarScreen } from "./src/screens/AvatarScreen";
@@ -58,16 +59,18 @@ function AppInner() {
     async function bootstrap() {
       try {
         const savedSession = await getAuthSession();
-        if (AUTH_MODE !== "mvp_header" && savedSession?.refreshToken) {
+        if (AUTH_MODE !== "mvp_header" && (savedSession?.refreshToken || isWebPlatform())) {
           const refreshed = await apiRequest<AuthSessionResponse>("/api/auth/refresh", {
             method: "POST",
-            body: { refreshToken: savedSession.refreshToken },
+            body: savedSession?.refreshToken ? { refreshToken: savedSession.refreshToken } : {},
           });
           await persistAuthPayload(refreshed);
           setUser(refreshed.user);
           if (getCurrentRouteState().tab === "Onboarding") setTab("Home");
           return;
         }
+
+        if (AUTH_MODE !== "mvp_header") return;
 
         const savedNickname = await getSavedNickname();
         if (!savedNickname) return;
@@ -81,7 +84,10 @@ function AppInner() {
       } catch (error) {
         const apiError = error as ApiError;
         reportClientError(error, { phase: "bootstrap" });
-        if (AUTH_MODE !== "mvp_header" && [401, 404].includes(apiError.status ?? 0)) {
+        if (AUTH_MODE !== "mvp_header" && [400, 401, 404].includes(apiError.status ?? 0)) {
+          await clearAuthSession();
+        }
+        if (AUTH_MODE === "mvp_header" && [401, 404].includes(apiError.status ?? 0)) {
           await clearSavedNickname();
           await clearAuthSession();
         }
@@ -99,10 +105,10 @@ function AppInner() {
   const logout = async () => {
     try {
       const session = await getAuthSession();
-      if (session?.refreshToken && AUTH_MODE !== "mvp_header") {
+      if (AUTH_MODE !== "mvp_header") {
         await apiRequest<void>("/api/auth/logout", {
           method: "POST",
-          body: { refreshToken: session.refreshToken },
+          body: session?.refreshToken ? { refreshToken: session.refreshToken } : {},
         });
       }
     } catch (error) {
