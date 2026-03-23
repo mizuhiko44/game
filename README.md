@@ -79,6 +79,19 @@ npm run dev
 
 このリポジトリは `AuthSession` を使うため、`npm install` だけでは足りず `prisma generate` と `prisma migrate` も必要です。
 
+### 2.2) Render / 初回デプロイで `P2021` や `public.User does not exist` が出る場合
+現在のリポジトリには `prisma/migrations` ディレクトリが含まれていないため、`prisma migrate deploy` だけでは初回のテーブル作成が行われません。Render では以下を使って schema を反映してください。
+
+```bash
+cd backend
+npm run prisma:generate
+npm run prisma:push
+npm run prisma:seed
+npm run start
+```
+
+Render の start command には `npm run start:render` を使う想定です。これで `db push` により schema を作成し、seed で `DemoUser` などの初期データを投入できます。
+
 ## Backend logs
 - request / warn / error は `backend/logs/app.log` に保存されます。
 - error レベルは `backend/logs/error.log` にも保存されます。
