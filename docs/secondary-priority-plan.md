@@ -39,6 +39,21 @@
 イテレーション2は、**「Web で主要MVP導線を表示・利用できる状態まで戻す」** という目的に対して完了と判断します。
 今後は「復旧フェーズ」ではなく、「Web ネイティブ最適化フェーズ」へ移行します。
 
+ただし、Voteブランチの現状は途中段階です。
+- Vercel での静的配備は確認済み
+- Expo Router ベースの Web エントリは作成済み
+- Web で表示される内容は現在プレースホルダー文字列のみ
+- `mobile/App.tsx` に残る既存MVP UI を Router 配下へ戻し切れていない
+
+
+## 2.6 イテレーション2の開始条件と目的
+イテレーション2では、**「デプロイできるがUIは未復旧」状態から、WebでMVP画面が正しく見える状態へ戻す** ことを最優先にします。
+
+最上位ゴール:
+- Vercel 配備を維持したまま、Home / Events / Vote / History / Results / Avatar / My Page / Admin の既存UI資産を再接続する
+- 少なくともトップ導線と主要画面が「文字列だけ」ではなくコンポーネントとして正常描画される状態にする
+- 旧 `App.tsx` 主導構成と Expo Router 主導構成の責務分担を明確化する
+
 ---
 ## 3. Web URL ルーティング
 
@@ -188,11 +203,16 @@
 ## 8. 次フェーズの実装単位案
 
 ### Phase A
+- Web UI 復旧
+- `App.tsx` と `app/` の接続方針確定
+- Home / Events / Vote の最短復旧
+
+### Phase B
 - URL routing
 - Config / Auth store
 - selected event / result state 移管
 
-### Phase B
+### Phase C
 - Admin web layout 最適化
 - table / filter / sort 追加
 
