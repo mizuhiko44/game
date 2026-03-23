@@ -36,6 +36,7 @@ MVP構成:
 
 ## Environment separation / auth groundwork
 - backend は `APP_ENV`, `PUBLIC_APP_URL`, `CORS_ORIGINS`, `AUTH_MODE`, `JWT_*` を使って local / staging / production を分離できる前提にしました。
+- `CORS_ORIGINS` はカンマ区切りで複数 origin を指定でき、末尾 `/` は避けてください。`https://*.vercel.app` のようなワイルドカードも利用できます。
 - `backend/.env.staging.example` と `mobile/.env.staging.example` を追加し、staging 用の設定雛形を用意しました。
 - mobile は `EXPO_PUBLIC_APP_ENV`, `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_AUTH_MODE` を使って接続先と認証モードを切り替えられます。
 - `AUTH_MODE` は `mvp_header`, `jwt_transition`, `jwt_required` の3段階を想定しています。
@@ -77,6 +78,19 @@ npm run dev
 ```
 
 このリポジトリは `AuthSession` を使うため、`npm install` だけでは足りず `prisma generate` と `prisma migrate` も必要です。
+
+### 2.2) Render / 初回デプロイで `P2021` や `public.User does not exist` が出る場合
+現在のリポジトリには `prisma/migrations` ディレクトリが含まれていないため、`prisma migrate deploy` だけでは初回のテーブル作成が行われません。Render では以下を使って schema を反映してください。
+
+```bash
+cd backend
+npm run prisma:generate
+npm run prisma:push
+npm run prisma:seed
+npm run start
+```
+
+Render の start command には `npm run start:render` を使う想定です。これで `db push` により schema を作成し、seed で `DemoUser` などの初期データを投入できます。
 
 ## Backend logs
 - request / warn / error は `backend/logs/app.log` に保存されます。

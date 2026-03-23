@@ -11,7 +11,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "smoke:test": "bash scripts/api-smoke-test.sh",
-    "ci": "npm run prisma:generate && npm run lint && bash -n scripts/api-smoke-test.sh"
+    "ci": "npm run prisma:generate && npm run lint && bash -n scripts/api-smoke-test.sh",
+    "prisma:push": "prisma db push",
+    "start:render": "npm run prisma:generate && npm run prisma:push && npm run prisma:seed && npm run start"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
