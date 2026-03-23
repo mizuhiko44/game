@@ -6,7 +6,7 @@ import { VoteHistoryItem } from "../lib/types";
 
 const CARD_STYLE = { backgroundColor: "#141D34", borderRadius: 10, padding: 12, gap: 6 } as const;
 
-export function ResultListScreen({ userId, onSelectResult }: { userId?: string; onSelectResult?: (row: VoteHistoryItem) => void }) {
+export function ResultListScreen({ userId, onSelectResult }: { userId?: string; onSelectResult?: (resultId: string) => void }) {
   const [rows, setRows] = useState<VoteHistoryItem[]>([]);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export function ResultListScreen({ userId, onSelectResult }: { userId?: string; 
   return (
     <ScreenTemplate title="Result">
       {rows.map((row) => (
-        <Pressable key={row.id} onPress={() => onSelectResult?.(row)}>
+        <Pressable key={row.id} onPress={() => onSelectResult?.(row.id)}>
           <View style={CARD_STYLE}>
             <Text style={{ color: "#F4F7FF", fontWeight: "700" }}>{row.event.title}</Text>
             <Text style={{ color: "#F4F7FF" }}>my option: {row.option.label}</Text>

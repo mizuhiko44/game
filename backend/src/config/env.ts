@@ -31,6 +31,7 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET ?? "development-insecure-jwt-secret",
   accessTokenTtlMinutes: parseNumber(process.env.ACCESS_TOKEN_TTL_MINUTES, 60),
   refreshTokenTtlDays: parseNumber(process.env.REFRESH_TOKEN_TTL_DAYS, 30),
+  refreshTokenCookieName: process.env.REFRESH_TOKEN_COOKIE_NAME ?? "prediction_game_refresh",
   monitoringEnabled: (process.env.MONITORING_ENABLED ?? "false") === "true",
   sentryDsn: process.env.SENTRY_DSN ?? "",
   sentryEnvironment: process.env.SENTRY_ENVIRONMENT ?? process.env.APP_ENV ?? "local",

@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { issueAuthTokensForUser, serializeUser } from "../../lib/auth";
+import { setRefreshTokenCookie } from "../../lib/auth-cookies";
+import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
 import { HttpError } from "../../middlewares/error";
 
@@ -62,6 +64,7 @@ export async function onboarding(req: Request, res: Response) {
     return issueAuthTokensForUser(created, tx);
   });
 
+  setRefreshTokenCookie(res, payload.auth.refreshToken, env.refreshTokenTtlDays);
   return res.status(201).json(payload);
 }
 
@@ -70,7 +73,9 @@ export async function login(req: Request, res: Response) {
   const user = await findUserByNicknameInsensitive(prisma, parsed.nickname);
   if (!user) throw new HttpError(404, "user not found");
 
-  return res.json(await issueAuthTokensForUser(user));
+  const payload = await issueAuthTokensForUser(user);
+  setRefreshTokenCookie(res, payload.auth.refreshToken, env.refreshTokenTtlDays);
+  return res.json(payload);
 }
 
 export async function listRegisteredUsers(_req: Request, res: Response) {
