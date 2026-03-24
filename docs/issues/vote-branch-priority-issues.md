@@ -109,8 +109,19 @@
 
 ---
 
-## GitHub登録手順（CLIが使える環境向け）
-1. `GH_TOKEN` もしくは `GITHUB_TOKEN` を設定
-2. `gh auth login` を実施
-3. 下記スクリプトを実行
-   - `bash scripts/github/create_vote_branch_issues.sh owner/repo`
+## 自動登録の仕組み（今後運用）
+Issue定義は `docs/issues/vote-branch-priority-issues.json` を正本として管理し、
+`python3 scripts/github/sync_vote_issues.py --repo <owner/repo> --update` で同期します。
+
+### 実行例
+```bash
+# 事前確認
+python3 scripts/github/sync_vote_issues.py --repo owner/repo --dry-run
+
+# 作成/更新
+GITHUB_TOKEN=*** python3 scripts/github/sync_vote_issues.py --repo owner/repo --update
+```
+
+### CI運用
+- `.github/workflows/sync-vote-issues.yml` から手動実行可能
+- `workflow_dispatch` で `dry_run`, `update` を選択可能

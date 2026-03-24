@@ -1,0 +1,39 @@
+name: Sync Vote Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run only (no create/update)"
+        required: true
+        default: true
+        type: boolean
+      update:
+        description: "Update existing issue body/labels if title matches"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync vote issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            python3 scripts/github/sync_vote_issues.py --dry-run --repo "$GITHUB_REPOSITORY"
+          else
+            EXTRA=""
+            if [[ "${{ inputs.update }}" == "true" ]]; then
+              EXTRA="--update"
+            fi
+            python3 scripts/github/sync_vote_issues.py --repo "$GITHUB_REPOSITORY" $EXTRA
+          fi
