@@ -107,7 +107,7 @@ def load_specs(path: str) -> list[IssueSpec]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create/update Vote issues from JSON spec.")
     parser.add_argument("--repo", default=os.getenv("GITHUB_REPOSITORY"), help="owner/repo")
-    parser.add_argument("--token", default=os.getenv("GITHUB_TOKEN"), help="GitHub API token")
+    parser.add_argument("--token", default=os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN"), help="GitHub API token")
     parser.add_argument(
         "--spec",
         default="docs/issues/vote-branch-priority-issues.json",
@@ -124,7 +124,7 @@ def main() -> int:
         print("error: --repo or GITHUB_REPOSITORY is required", file=sys.stderr)
         return 2
     if not args.token and not args.dry_run:
-        print("error: --token or GITHUB_TOKEN is required", file=sys.stderr)
+        print("error: --token or GITHUB_TOKEN/GH_TOKEN is required", file=sys.stderr)
         return 2
 
     specs = load_specs(args.spec)
