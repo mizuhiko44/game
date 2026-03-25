@@ -120,5 +120,6 @@ GH_TOKEN=*** bash scripts/github/create_vote_branch_issues.sh owner/repo
 ```
 
 ### CI運用
-- `.github/workflows/sync-vote-issues.yml` から手動実行可能
+- `.github/workflows/sync-vote-issues.yml` は `workflow_dispatch` で手動実行可能
+- 入力: `dry_run` と `target_repo`（空の場合は現在のリポジトリ）
 - GitHub Actions では `GH_TOKEN: ${{ github.token }}` を使って `gh issue create` を実行
