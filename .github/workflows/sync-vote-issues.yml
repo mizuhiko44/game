@@ -1,0 +1,45 @@
+name: Sync Vote Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run only (no create)"
+        required: true
+        default: true
+        type: boolean
+      target_repo:
+        description: "Target repo (owner/name). Empty = current repository"
+        required: false
+        type: string
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve target repo
+        id: vars
+        run: |
+          set -euo pipefail
+          TARGET='${{ inputs.target_repo }}'
+          if [[ -z "$TARGET" ]]; then
+            TARGET='${{ github.repository }}'
+          fi
+          echo "target_repo=$TARGET" >> "$GITHUB_OUTPUT"
+
+      - name: Dry-run (spec check)
+        if: ${{ inputs.dry_run }}
+        run: python3 scripts/github/sync_vote_issues.py --repo "${{ steps.vars.outputs.target_repo }}" --dry-run
+
+      - name: Create missing vote issues via gh
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash scripts/github/create_vote_branch_issues.sh "${{ steps.vars.outputs.target_repo }}"
