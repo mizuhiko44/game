@@ -1,0 +1,58 @@
+[
+  {
+    "title": "[Vote][P0] Expo Router前提でVote系URLを正規化する",
+    "priority": "P0",
+    "importance": "Critical",
+    "labels": ["vote", "priority:P0", "vote-managed"],
+    "body": "## 背景\n- Vote導線はURL同期済みだが route component 分割が未完了\n- App.tsx 中心の暫定配線が残っている\n\n## 対応内容\n- `/vote`, `/vote/complete`, `/events/:eventId` の遷移責務を route 単位へ移行\n- auth guard と deep link 復元仕様を明文化\n\n## 受け入れ条件\n- URL直打ちでVote/VoteCompleteに自然遷移\n- 戻る/進むでVoteフローが破綻しない"
+  },
+  {
+    "title": "[Vote][P0] App.tsx依存を解消する状態責務分離（Auth/Navigation/SelectedEvent）",
+    "priority": "P0",
+    "importance": "Critical",
+    "labels": ["vote", "priority:P0", "vote-managed"],
+    "body": "## 背景\n- Vote対象イベントの選択状態が App.tsx / AppState に集中している\n\n## 対応内容\n- Auth / Config / Navigation / SelectedEntity store を分割\n- EventDetail / EventList 起点のVote遷移仕様を統一\n\n## 受け入れ条件\n- Voteに必要なstateをhooks経由で取得できる\n- App.tsxのVote関連責務が大幅に減る"
+  },
+  {
+    "title": "[Vote][P0] Web版Adminで未精算イベント処理を効率化（一覧/絞込/並び替え）",
+    "priority": "P0",
+    "importance": "Critical",
+    "labels": ["vote", "priority:P0", "vote-managed"],
+    "body": "## 背景\n- 結果登録オペレーションが mobile 寄りUIで非効率\n\n## 対応内容\n- 未精算イベント中心のtable表示\n- status/category/eventType filter, sort, paging追加\n\n## 受け入れ条件\n- Web管理画面で対象探索〜結果登録までの操作工数が削減される"
+  },
+  {
+    "title": "[Vote][P1] 投票〜精算のAPI統合テストを拡張",
+    "priority": "P1",
+    "importance": "High",
+    "labels": ["vote", "priority:P1", "vote-managed"],
+    "body": "## 背景\n- Vote主要導線の回帰検知範囲が不足\n\n## 対応内容\n- 認証/投票/締切後不可/精算/履歴整合性の統合テスト追加\n\n## 受け入れ条件\n- Vote主要シナリオがCI上で自動検知できる"
+  },
+  {
+    "title": "[Vote][P1] 監視・エラー追跡（web/mobile/backend）導入",
+    "priority": "P1",
+    "importance": "High",
+    "labels": ["vote", "priority:P1", "vote-managed"],
+    "body": "## 背景\n- Vote失敗時の原因追跡基盤が不足\n\n## 対応内容\n- request_id, user_id, route/endpoint, status の観測\n- 500系 / 投票エラー急増の通知設計\n\n## 受け入れ条件\n- 障害時に原因箇所を短時間で特定できる"
+  },
+  {
+    "title": "[Vote][P1] JWT運用hardening（Web cookie refresh + native session）",
+    "priority": "P1",
+    "importance": "High",
+    "labels": ["vote", "priority:P1", "vote-managed"],
+    "body": "## 背景\n- JWT導線はあるが本番向けの鍵運用 / 失効運用が未整備\n\n## 対応内容\n- 鍵ローテーション手順\n- refresh失効運用強化\n- native secure storage運用強化\n\n## 受け入れ条件\n- Vote導線での再認証挙動が設計/実装で安定する"
+  },
+  {
+    "title": "[Vote][P2] 通知・非同期ジョブ基盤（結果通知/リマインド）",
+    "priority": "P2",
+    "importance": "Medium",
+    "labels": ["vote", "priority:P2", "vote-managed"],
+    "body": "## 背景\n- Home表示中心で非同期通知基盤が未整備\n\n## 対応内容\n- 結果通知 / 締切リマインドのジョブ化方針を策定\n\n## 受け入れ条件\n- 技術方針と最小実装案が確定する"
+  },
+  {
+    "title": "[Vote][P2] 運用Runbook整備（イベント運用/誤登録時対応）",
+    "priority": "P2",
+    "importance": "Medium",
+    "labels": ["vote", "priority:P2", "vote-managed"],
+    "body": "## 背景\n- Vote運用手順が属人化しやすい\n\n## 対応内容\n- イベント作成 / 結果登録 / 誤登録対応 / 障害一次切り分けを文書化\n\n## 受け入れ条件\n- 担当交代時でも運用継続できる"
+  }
+]
